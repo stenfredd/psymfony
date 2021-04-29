@@ -26,6 +26,11 @@ services:
     App\Controller\:
         resource: '../src/Controller/'
         tags: ['controller.service_arguments']
+    App\Auth\Controller\:
+        resource: '../src/Auth/Controller/'
+        tags: ['controller.service_arguments']
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+    App\Auth\Security\PasswordEncoder:
+        arguments: ['%env(STATIC_SALT)%']

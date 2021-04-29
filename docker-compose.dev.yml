@@ -1,0 +1,27 @@
+version: '3.7'
+
+services:
+  nginx:
+    networks:
+      - appuser
+
+  php:
+    build:
+      dockerfile: ./.docker/config/php/php.dev.dockerfile
+    environment:
+      XDEBUG_CONFIG: client_host=${XDEBUG_REMOTE_HOST} client_port=${XDEBUG_STORM_PORT} remote_enable=1
+      PHP_IDE_CONFIG: serverName=${XDEBUG_STORM_SERVER_NAME}
+    networks:
+      - appuser
+
+  database:
+    networks:
+      - appuser
+
+networks:
+  appuser:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: ${SUBNET_IP}/${SUBNET_MASK}

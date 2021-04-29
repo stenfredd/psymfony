@@ -1,0 +1,33 @@
+version: '3.7'
+
+services:
+  nginx:
+    build:
+      context: .
+      dockerfile: ./.docker/config/nginx/nginx.dockerfile
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/var/www:delegated
+    links:
+      - php
+
+  php:
+    build:
+      context: .
+    volumes:
+      - ./:/var/www:delegated
+      - ./.docker/config/php/php.ini:/usr/local/etc/php/php.ini
+    ports:
+      - "9000:9000"
+
+  database:
+    image: postgres:13-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./.docker/data/postgres/db:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"

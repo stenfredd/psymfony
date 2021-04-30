@@ -282,6 +282,9 @@
     "symfony/event-dispatcher-contracts": {
         "version": "v2.4.0"
     },
+    "symfony/expression-language": {
+        "version": "v5.2.4"
+    },
     "symfony/filesystem": {
         "version": "v5.2.6"
     },

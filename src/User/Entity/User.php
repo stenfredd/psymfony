@@ -3,6 +3,7 @@
 namespace App\User\Entity;
 
 use App\Auth\Entity\AuthToken;
+use App\Auth\Entity\LoginFailed;
 use App\User\Repository\UserRepository;
 
 use Doctrine\Common\Collections\ArrayCollection;
@@ -61,6 +62,11 @@ class User implements UserInterface
      */
     private $updatedAt;
 
+    /**
+     * @ORM\OneToMany(targetEntity=LoginFailed::class, mappedBy="target", orphanRemoval=true)
+     */
+    private $loginFaileds;
+
 	/**
 	 * @return string
 	 */
@@ -73,10 +79,11 @@ class User implements UserInterface
 	 * User constructor.
 	 */
 	public function __construct()
-    {
-        $this->roles = new ArrayCollection();
-        $this->authTokens = new ArrayCollection();
-    }
+	{
+		$this->roles = new ArrayCollection();
+		$this->authTokens = new ArrayCollection();
+		$this->loginFaileds = new ArrayCollection();
+	}
 
 	/**
 	 * @ORM\PrePersist
@@ -94,28 +101,28 @@ class User implements UserInterface
 	 * @return int|null
 	 */
 	public function getId(): ?int
-    {
-        return $this->id;
-    }
+	{
+		return $this->id;
+	}
 
 	/**
 	 * @return string|null
 	 */
 	public function getEmail(): ?string
-    {
-        return $this->email;
-    }
+	{
+		return $this->email;
+	}
 
 	/**
 	 * @param string $email
 	 * @return User $this
 	 */
 	public function setEmail(string $email): self
-    {
-        $this->email = $email;
+	{
+		$this->email = $email;
 
-        return $this;
-    }
+		return $this;
+	}
 
     /**
      * A visual identifier that represents this user.
@@ -140,11 +147,11 @@ class User implements UserInterface
 	 * @return User $this
 	 */
 	public function setPassword(string $password): self
-    {
-        $this->password = $password;
+	{
+		$this->password = $password;
 
-        return $this;
-    }
+		return $this;
+	}
 
     /**
      * Returning a salt is only needed, if you are not using a modern
@@ -172,8 +179,8 @@ class User implements UserInterface
 	public function getRoles(): array
 	{
 		$result = [];
-		if(count($roles = $this->roles) > 0){
-			foreach ($roles as $cRole){
+		if (count($roles = $this->roles) > 0) {
+			foreach ($roles as $cRole) {
 				$result[] = $cRole->getName();
 			}
 		}
@@ -193,24 +200,24 @@ class User implements UserInterface
 	 * @return User $this
 	 */
 	public function addRole(Role $role): self
-    {
-        if (!$this->roles->contains($role)) {
-            $this->roles[] = $role;
-        }
+	{
+		if (!$this->roles->contains($role)) {
+			$this->roles[] = $role;
+		}
 
-        return $this;
-    }
+		return $this;
+	}
 
 	/**
 	 * @param Role $role
 	 * @return User $this
 	 */
 	public function removeRole(Role $role): self
-    {
-        $this->roles->removeElement($role);
+	{
+		$this->roles->removeElement($role);
 
-        return $this;
-    }
+		return $this;
+	}
 
     /**
      * @return Collection|AuthToken[]
@@ -225,65 +232,95 @@ class User implements UserInterface
 	 * @return User $this
 	 */
 	public function addAuthToken(AuthToken $authToken): self
-    {
-        if (!$this->authTokens->contains($authToken)) {
-            $this->authTokens[] = $authToken;
-            $authToken->setHolder($this);
-        }
+	{
+		if (!$this->authTokens->contains($authToken)) {
+			$this->authTokens[] = $authToken;
+			$authToken->setHolder($this);
+		}
 
-        return $this;
-    }
+		return $this;
+	}
 
 	/**
 	 * @param AuthToken $authToken
 	 * @return User $this
 	 */
 	public function removeAuthToken(AuthToken $authToken): self
-    {
-        if ($this->authTokens->removeElement($authToken)) {
-            // set the owning side to null (unless already changed)
-            if ($authToken->getHolder() === $this) {
-                $authToken->setHolder(null);
-            }
-        }
+	{
+		if ($this->authTokens->removeElement($authToken)) {
+			// set the owning side to null (unless already changed)
+			if ($authToken->getHolder() === $this) {
+				$authToken->setHolder(null);
+			}
+		}
 
-        return $this;
-    }
+		return $this;
+	}
 
 	/**
 	 * @return \DateTimeInterface|null
 	 */
 	public function getCreatedAt(): ?\DateTimeInterface
-    {
-        return $this->createdAt;
-    }
+	{
+		return $this->createdAt;
+	}
 
 	/**
 	 * @param \DateTimeInterface $createdAt
 	 * @return User $this
 	 */
 	public function setCreatedAt(\DateTimeInterface $createdAt): self
-    {
-        $this->createdAt = $createdAt;
+	{
+		$this->createdAt = $createdAt;
 
-        return $this;
-    }
+		return $this;
+	}
 
 	/**
 	 * @return \DateTimeInterface|null
 	 */
 	public function getUpdatedAt(): ?\DateTimeInterface
-    {
-        return $this->updatedAt;
-    }
+	{
+		return $this->updatedAt;
+	}
 
 	/**
 	 * @param \DateTimeInterface $updatedAt
 	 * @return User $this
 	 */
 	public function setUpdatedAt(\DateTimeInterface $updatedAt): self
+	{
+		$this->updatedAt = $updatedAt;
+
+		return $this;
+	}
+
+    /**
+     * @return Collection|LoginFailed[]
+     */
+    public function getLoginFails(): Collection
     {
-        $this->updatedAt = $updatedAt;
+        return $this->loginFaileds;
+    }
+
+    public function addLoginFailed(LoginFailed $loginFailed): self
+    {
+        if (!$this->loginFaileds->contains($loginFailed)) {
+            $this->loginFaileds[] = $loginFailed;
+            $loginFailed->setTarget($this);
+        }
+
+        return $this;
+    }
+
+    public function removeLoginFailed(LoginFailed $loginFailed): self
+    {
+        if ($this->loginFaileds->removeElement($loginFailed)) {
+            // set the owning side to null (unless already changed)
+            if ($loginFailed->getTarget() === $this) {
+                $loginFailed->setTarget(null);
+            }
+        }
 
         return $this;
     }

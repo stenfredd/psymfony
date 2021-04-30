@@ -5,11 +5,11 @@ namespace App\Auth\Controller;
 use App\Auth\Service\AuthService;
 
 use App\User\Service\UserService;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Request;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 
 /**
  * @Route("/auth")
@@ -20,6 +20,7 @@ class AuthController extends AbstractController
 	 * @var AuthService
 	 */
 	private $authService;
+
 	/**
 	 * @var UserService
 	 */
@@ -76,10 +77,10 @@ class AuthController extends AbstractController
 	}
 
 	/**
-	 * @Route("/permission-test", name="logintest")
-	 * @IsGranted("PERMISSION_TEST")
+	 * @Route("/permission-test", name="ptest")
+	 * @Security("is_granted('PERMISSION_TЕEST')", statusCode=403, message="Access denied")
 	 */
-	public function permissionTest(): Response
+	public function p_test(): Response
 	{
 		return $this->json([
 			'status' => 'SUCCESS',

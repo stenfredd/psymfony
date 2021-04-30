@@ -34,3 +34,5 @@ services:
     # please note that last definitions always *replace* previous ones
     App\Auth\Security\PasswordEncoder:
         arguments: ['%env(STATIC_SALT)%']
+    App\Auth\Service\AuthService:
+        arguments: ['%env(MAX_LOGIN_FAIL_COUNT)%', '%env(MAX_LOGIN_FAIL_PERIOD)%', '%env(LOGIN_FAIL_BLOCKING_TIME)%']

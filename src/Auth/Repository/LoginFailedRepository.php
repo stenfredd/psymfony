@@ -3,9 +3,10 @@
 namespace App\Auth\Repository;
 
 use App\Auth\Entity\LoginFailed;
-use App\Auth\Service\LoginFailedDateTime;
 use App\User\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\ORMException;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -21,6 +22,12 @@ class LoginFailedRepository extends ServiceEntityRepository
         parent::__construct($registry, LoginFailed::class);
     }
 
+	/**
+	 * @param LoginFailed $loginFailed
+	 * @return LoginFailed
+	 * @throws ORMException
+	 * @throws OptimisticLockException
+	 */
 	public function save(LoginFailed $loginFailed): LoginFailed
 	{
 		$this->_em->persist($loginFailed);
@@ -29,35 +36,11 @@ class LoginFailedRepository extends ServiceEntityRepository
 		return $loginFailed;
 	}
 
-    // /**
-    //  * @return LoginFailed[] Returns an array of LoginFailed objects
-    //  */
-    /*
-    public function findByExampleField($value)
-    {
-        return $this->createQueryBuilder('l')
-            ->andWhere('l.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('l.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
-    }
-    */
-
-    /*
-    public function findOneBySomeField($value): ?LoginFailed
-    {
-        return $this->createQueryBuilder('l')
-            ->andWhere('l.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
-    }
-    */
-
+	/**
+	 * @param User $user
+	 * @param int $period
+	 * @return array
+	 */
 	public function userFailsCount(User $user, int $period): array
 	{
 		$last_time = new \DateTime('now');
@@ -71,6 +54,9 @@ class LoginFailedRepository extends ServiceEntityRepository
 			->getResult();
 	}
 
+	/**
+	 * @param \DateTime $lastTime
+	 */
 	public function clearOldFails(\DateTime $lastTime)
 	{
 		$this->createQueryBuilder('l')

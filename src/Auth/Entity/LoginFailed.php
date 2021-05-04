@@ -4,6 +4,7 @@ namespace App\Auth\Entity;
 
 use App\Auth\Repository\LoginFailedRepository;
 use App\User\Entity\User;
+use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -20,18 +21,18 @@ class LoginFailed
     private $id;
 
     /**
-     * @ORM\ManyToOne(targetEntity=User::class, inversedBy="loginFaileds")
+     * @ORM\ManyToOne(targetEntity=User::class, inversedBy="loginFaileds", cascade={"persist"})
      * @ORM\JoinColumn(nullable=false)
      */
     private $target;
 
     /**
-     * @ORM\Column(type="string", length=15)
+     * @ORM\Column(type="string", length=15, nullable=true)
      */
     private $ip;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string", length=255, nullable=true)
      */
     private $client;
 
@@ -50,53 +51,84 @@ class LoginFailed
 		}
 	}
 
-    public function getId(): ?int
+	/**
+	 * @return int
+	 */
+	public function getId(): int
     {
         return $this->id;
     }
 
-    public function getTarget(): ?User
+	/**
+	 * @return User
+	 */
+	public function getTarget(): User
     {
         return $this->target;
     }
 
-    public function setTarget(?User $target): self
+	/**
+	 * @param User $target
+	 * @return $this
+	 */
+	public function setTarget(User $target): self
     {
         $this->target = $target;
 
         return $this;
     }
 
-    public function getIp(): ?string
+	/**
+	 * @return string
+	 */
+	public function getIp(): ?string
     {
         return $this->ip;
     }
 
-    public function setIp(string $ip): self
+	/**
+	 * @param string $ip
+	 * @return $this
+	 */
+	public function setIp(?string $ip): self
     {
         $this->ip = $ip;
 
         return $this;
     }
 
-    public function getClient(): ?string
+	/**
+	 * @return string
+	 */
+	public function getClient(): ?string
     {
         return $this->client;
     }
 
-    public function setClient(string $client): self
+	/**
+	 * @param string $client
+	 * @return $this
+	 */
+	public function setClient(?string $client): self
     {
         $this->client = $client;
 
         return $this;
     }
 
-    public function getFailedAt(): ?\DateTimeInterface
+	/**
+	 * @return DateTimeInterface
+	 */
+	public function getFailedAt(): DateTimeInterface
     {
         return $this->failedAt;
     }
 
-    public function setFailedAt(\DateTimeInterface $failedAt): self
+	/**
+	 * @param DateTimeInterface $failedAt
+	 * @return $this
+	 */
+	public function setFailedAt(DateTimeInterface $failedAt): self
     {
         $this->failedAt = $failedAt;
 

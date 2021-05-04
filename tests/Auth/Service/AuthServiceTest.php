@@ -132,6 +132,28 @@ class AuthServiceTest extends KernelTestCase
 		$password = 'wrong';
 
 		$this->authService->verifyPassword($user, $password);
+	}
+
+	public function testManyLoginFailAttempts()
+	{
+		$email = 'manyattemptsfails@gmail.com';
+		$pass = '111111';
+
+		$user = $this->userService->createUser($email, $pass, []);
+
+		for ($i=1;$i<=$_ENV['MAX_LOGIN_FAIL_COUNT'];$i++) {
+			try {
+				$this->authService->login($email, 'wrong');
+			} catch (HttpException $e) {
+				$this->assertEquals('Invalid username or password', $e->getMessage());
+			}
+		}
+
+		try {
+			$this->authService->login($email, 'wrong');
+		} catch (HttpException $e) {
+			$this->assertEquals('Too many attempts, try again later', $e->getMessage());
+		}
 
 	}
 

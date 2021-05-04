@@ -7,6 +7,7 @@ use App\User\Entity\User;
 use App\Auth\Service\TokenExpiredDateTime;
 use App\Auth\Repository\AuthTokenRepository;
 
+use DateTimeInterface;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -106,18 +107,18 @@ class AuthToken
     }
 
 	/**
-	 * @return \DateTimeInterface
+	 * @return DateTimeInterface
 	 */
-	public function getCreatedAt(): ?\DateTimeInterface
+	public function getCreatedAt(): ?DateTimeInterface
 	{
 		return $this->createdAt;
 	}
 
 	/**
-	 * @param \DateTimeInterface $createdAt
+	 * @param DateTimeInterface $createdAt
 	 * @return AuthToken $this
 	 */
-	public function setCreatedAt(\DateTimeInterface $createdAt): self
+	public function setCreatedAt(DateTimeInterface $createdAt): self
 	{
 		$this->createdAt = $createdAt;
 
@@ -125,18 +126,18 @@ class AuthToken
 	}
 
 	/**
-	 * @return \DateTimeInterface
+	 * @return DateTimeInterface
 	 */
-	public function getExpiredAt(): ?\DateTimeInterface
+	public function getExpiredAt(): ?DateTimeInterface
 	{
 		return $this->expiredAt;
 	}
 
 	/**
-	 * @param \DateTimeInterface $expiredAt
+	 * @param DateTimeInterface $expiredAt
 	 * @return AuthToken $this
 	 */
-	public function setExpiredAt(\DateTimeInterface $expiredAt): self
+	public function setExpiredAt(DateTimeInterface $expiredAt): self
 	{
 		$this->expiredAt = $expiredAt;
 

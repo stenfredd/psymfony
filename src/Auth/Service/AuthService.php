@@ -19,13 +19,19 @@ use Symfony\Component\Security\Core\Exception\AuthenticationException;
 
 class AuthService
 {
-	/** @var UserRepositoryInterface */
+	/**
+	 * @var UserRepositoryInterface
+	 */
 	private $userRepository;
 
-	/** @var PasswordEncoder */
+	/**
+	 * @var PasswordEncoder
+	 */
 	private $passwordEncoder;
 
-	/** @var TokenService */
+	/**
+	 * @var TokenService
+	 */
 	private $tokenService;
 
 	/**
@@ -42,10 +48,12 @@ class AuthService
 	 * @var string
 	 */
 	private $maxLoginFailsCount;
+
 	/**
 	 * @var int
 	 */
 	private $loginFailsPeriod;
+
 	/**
 	 * @var int
 	 */
@@ -87,8 +95,9 @@ class AuthService
 	/**
 	 * @param string $email
 	 * @param string $password
-	 * @return string
+	 * @throws HttpException
 	 * @throws LogicException
+	 * @return string
 	 */
 	public function login(string $email, string $password): string
 	{
@@ -111,7 +120,7 @@ class AuthService
 			throw new HttpException(403, "Too many attempts, try again later");
 		}
 		catch (\Exception $e) {
-			throw new \LogicException('Authentication failed');
+			throw new LogicException('Authentication failed');
 		}
 	}
 
@@ -138,19 +147,28 @@ class AuthService
 		}
 	}
 
+	/**
+	 * @param User $user
+	 */
 	public function saveFailedLogin(User $user)
 	{
 		$fail = new LoginFailed();
-		$fail->setIp($this->request->getClientIp());
 		$fail->setTarget($user);
-		$fail->setClient($this->request->headers->get('User-Agent'));
+		if ($this->request) {
+			$fail->setIp($this->request->getClientIp());
+			$fail->setClient($this->request->headers->get('User-Agent'));
+		}
 
 		$this->loginFailedRepository->save($fail);
 	}
 
+	/**
+	 * @param User $user
+	 * @throws LoginFailedCountException
+	 */
 	private function checkLoginFails(User $user)
 	{
-		$this->clearOldLoginFiles();
+		$this->clearOldLoginFails();
 
 		$period = $this->loginFailsPeriod + $this->loginFailsBlockingTime;
 		$fails = $this->loginFailedRepository->userFailsCount($user, $period);
@@ -160,7 +178,7 @@ class AuthService
 		}
 	}
 
-	private function clearOldLoginFiles()
+	private function clearOldLoginFails()
 	{
 		$lastTime = new \DateTime('now');
 		$lastTime->modify(sprintf('-%d second', ($this->loginFailsPeriod + $this->loginFailsBlockingTime)));

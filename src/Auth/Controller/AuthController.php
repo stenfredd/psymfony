@@ -78,10 +78,11 @@ class AuthController extends AbstractController
 
 	/**
 	 * @Route("/permission-test", name="ptest")
-	 * @Security("is_granted('PERMISSION_TЕEST')", statusCode=403, message="Access denied")
+	 * @Security("is_granted('PERMISSION_PRMPTEST')", statusCode=403, message="Access denied")
 	 */
-	public function p_test(): Response
+	public function permissionTest(Request $request): Response
 	{
+
 		return $this->json([
 			'status' => 'SUCCESS',
 			'data' => 'norm vse'

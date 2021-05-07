@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Auth\Security;
 
 use App\User\Entity\User;
@@ -47,7 +49,7 @@ class UserProvider implements UserProviderInterface
 	 * @return UserInterface
 	 *
 	 */
-	public function loadUserByUsername(string $authToken)
+	public function loadUserByUsername(string $authToken): UserInterface
 	{
 		try {
 			$token = $this->tokenService->getByTokenValue($authToken);
@@ -82,7 +84,7 @@ class UserProvider implements UserProviderInterface
 	 * @param UserInterface $user
 	 * @return void
 	 */
-	public function refreshUser(UserInterface $user)
+	public function refreshUser(UserInterface $user): void
 	{
 		throw new UnsupportedUserException();
 	}
@@ -92,7 +94,7 @@ class UserProvider implements UserProviderInterface
 	 * @param string $class
 	 * @return bool
 	 */
-	public function supportsClass(string $class)
+	public function supportsClass(string $class): bool
 	{
 		return User::class === $class || is_subclass_of($class, User::class);
 	}

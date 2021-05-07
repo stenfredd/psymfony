@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\User\Repository;
 
 use App\User\Entity\User;
@@ -72,5 +74,20 @@ class UserRepository extends ServiceEntityRepository implements UserRepositoryIn
 			throw new NotFoundHttpException('User not found');
 		}
 		return $user;
+	}
+
+	/**
+	 * @param $user
+	 * @throws ORMException
+	 * @throws OptimisticLockException
+	 */
+	public function delete($user)
+	{
+		try {
+			$this->_em->remove($user);
+			$this->_em->flush();
+		} catch (UniqueConstraintViolationException $exception) {
+			throw new NotFoundHttpException('User not found');
+		}
 	}
 }

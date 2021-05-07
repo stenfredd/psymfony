@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\User\Entity;
 
 use App\User\Repository\PermissionRepository;
@@ -44,9 +46,9 @@ class Permission
 
 
 	/**
-	 * @return int|null
+	 * @return int
 	 */
-	public function getId(): ?int
+	public function getId(): int
     {
         return $this->id;
     }
@@ -78,7 +80,11 @@ class Permission
         return $this->description;
     }
 
-    public function setDescription(string $description): self
+	/**
+	 * @param string $description
+	 * @return $this
+	 */
+	public function setDescription(string $description): self
     {
         $this->description = $description;
 
@@ -93,7 +99,11 @@ class Permission
         return $this->roles;
     }
 
-    public function addRole(Role $role): self
+	/**
+	 * @param Role $role
+	 * @return $this
+	 */
+	public function addRole(Role $role): self
     {
         if (!$this->roles->contains($role)) {
             $this->roles[] = $role;
@@ -103,7 +113,11 @@ class Permission
         return $this;
     }
 
-    public function removeRole(Role $role): self
+	/**
+	 * @param Role $role
+	 * @return $this
+	 */
+	public function removeRole(Role $role): self
     {
         if ($this->roles->removeElement($role)) {
             $role->removePermission($this);

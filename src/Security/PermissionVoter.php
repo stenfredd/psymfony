@@ -34,7 +34,7 @@ class PermissionVoter extends Voter
 	 * @param mixed $subject
 	 * @return bool
 	 */
-	protected function supports(string $attribute, $subject)
+	protected function supports(string $attribute, $subject): bool
 	{
 		if (str_starts_with($attribute, "PERMISSION_")) {
 			$this->permissionName = preg_replace('/^PERMISSION_/', '', $attribute);
@@ -50,7 +50,7 @@ class PermissionVoter extends Voter
 	 * @return bool
 	 * @throws NonUniqueResultException
 	 */
-	protected function voteOnAttribute(string $attribute, $subject, TokenInterface $token)
+	protected function voteOnAttribute(string $attribute, $subject, TokenInterface $token): bool
 	{
 		if (!($user = $token->getUser()) instanceof User) {
 			return false;

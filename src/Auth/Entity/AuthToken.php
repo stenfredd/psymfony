@@ -1,12 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Auth\Entity;
 
-
 use App\User\Entity\User;
-use App\Auth\Service\TokenExpiredDateTime;
 use App\Auth\Repository\AuthTokenRepository;
-
 use DateTimeInterface;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -35,7 +34,7 @@ class AuthToken
     /**
 	 * @var User
      * @ORM\ManyToOne(targetEntity=User::class, inversedBy="tmp")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\JoinColumn(nullable=false, onDelete="CASCADE")
      */
     private $holder;
 
@@ -57,21 +56,20 @@ class AuthToken
 	public function onPrePersist(): void
 	{
 		$this->createdAt = new \DateTime('now');
-		$this->expiredAt = new TokenExpiredDateTime('now');
 	}
 
 	/**
-	 * @return int|null
+	 * @return int
 	 */
-	public function getId(): ?int
+	public function getId(): int
     {
         return $this->id;
     }
 
 	/**
-	 * @return string|null
+	 * @return string
 	 */
-	public function getValue(): ?string
+	public function getValue(): string
     {
         return $this->value;
     }
@@ -88,18 +86,18 @@ class AuthToken
     }
 
 	/**
-	 * @return User|null
+	 * @return User
 	 */
-	public function getHolder(): ?User
+	public function getHolder(): User
     {
         return $this->holder;
     }
 
 	/**
-	 * @param User|null $holder
+	 * @param User $holder
 	 * @return $this
 	 */
-	public function setHolder(?User $holder): self
+	public function setHolder(User $holder): self
     {
         $this->holder = $holder;
 

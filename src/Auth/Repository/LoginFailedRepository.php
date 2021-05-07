@@ -1,9 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Auth\Repository;
 
 use App\Auth\Entity\LoginFailed;
 use App\User\Entity\User;
+use DateTime;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
@@ -15,7 +18,7 @@ use Doctrine\Persistence\ManagerRegistry;
  * @method LoginFailed[]    findAll()
  * @method LoginFailed[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
-class LoginFailedRepository extends ServiceEntityRepository
+class LoginFailedRepository extends ServiceEntityRepository implements LoginFailedRepositoryInterface
 {
     public function __construct(ManagerRegistry $registry)
     {
@@ -38,26 +41,23 @@ class LoginFailedRepository extends ServiceEntityRepository
 
 	/**
 	 * @param User $user
-	 * @param int $period
+	 * @param DateTime $lastTime
 	 * @return array
 	 */
-	public function userFailsCount(User $user, int $period): array
+	public function userFailsCount(User $user, DateTime $lastTime): array
 	{
-		$last_time = new \DateTime('now');
-		$last_time->modify(sprintf('-%d second', $period));
-
 		return $this->createQueryBuilder('l')
 			->andWhere('l.failedAt > :last_time')
-			->setParameter('last_time', $last_time->format('Y-m-d H:i:s'))
+			->setParameter('last_time', $lastTime->format('Y-m-d H:i:s'))
 			->orderBy('l.failedAt', 'DESC')
 			->getQuery()
 			->getResult();
 	}
 
 	/**
-	 * @param \DateTime $lastTime
+	 * @param DateTime $lastTime
 	 */
-	public function clearOldFails(\DateTime $lastTime)
+	public function clearOldFails(DateTime $lastTime): void
 	{
 		$this->createQueryBuilder('l')
 			->delete()

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\User\Service;
 
 use App\User\Entity\Permission;
@@ -14,6 +16,10 @@ class PermissionService
 	private $permissionRepository;
 
 
+	/**
+	 * PermissionService constructor.
+	 * @param PermissionRepositoryInterface $permissionRepository
+	 */
 	public function __construct(PermissionRepositoryInterface $permissionRepository)
 	{
 		$this->permissionRepository = $permissionRepository;
@@ -27,7 +33,7 @@ class PermissionService
 	 */
 	public function createPermission(string $name, string $description): Permission
 	{
-		$permission = new Permission;
+		$permission = new Permission();
 
 		$permission->setName($name);
 		$permission->setDescription($description);

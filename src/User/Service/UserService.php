@@ -1,42 +1,96 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\User\Service;
 
 use App\Auth\Service\AuthService;
 use App\Auth\Service\TokenService;
+use App\Auth\ValueObject\ResetPassword;
+use App\Auth\ValueObject\SignUp;
+use App\User\DTO\UserDataDTO;
 use App\User\Entity\User;
 use App\User\Repository\PermissionRepositoryInterface;
+use App\User\Repository\UserDataRepository;
 use App\User\Repository\UserRepositoryInterface;
 use App\Auth\Security\PasswordEncoder;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\NonUniqueResultException;
+use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\ORMException;
+use Exception;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Throwable;
+use Symfony\Component\Security\Core\Security;
 
 class UserService
 {
-	/** @var UserRepositoryInterface */
+	/**
+	 * @var UserRepositoryInterface
+	 */
 	private $userRepository;
 
-	/** @var PasswordEncoder */
+	/**
+	 * @var PasswordEncoder
+	 */
 	private $passwordEncoder;
 
-	/** @var TokenService */
+	/**
+	 * @var TokenService
+	 */
 	private $tokenService;
 
-	/** @var AuthService */
+	/**
+	 * @var AuthService
+	 */
 	private $authService;
+
 	/**
 	 * @var EntityManager
 	 */
 	private $entityManager;
+
 	/**
 	 * @var PermissionRepositoryInterface
 	 */
 	private $permissionRepository;
+
 	/**
 	 * @var RoleService
 	 */
 	private $roleService;
+
+	/**
+	 * @var UserDataRepository
+	 */
+	private $userDataRepository;
+
+	/**
+	 * @var EmailPasswordResetTokenService
+	 */
+	private $emailPasswordResetTokenService;
+
+	/**
+	 * @var EmailActivationTokenService
+	 */
+	private $emailActivationTokenService;
+
+	/**
+	 * @var UrlGeneratorInterface
+	 */
+	private $router;
+
+	/**
+	 * @var Security
+	 */
+	private $security;
+
+	/**
+	 * @var UserNotificator
+	 */
+	private $userNotificator;
 
 	/**
 	 * UserService constructor.
@@ -47,6 +101,12 @@ class UserService
 	 * @param AuthService $authService
 	 * @param EntityManagerInterface $entityManager
 	 * @param PermissionRepositoryInterface $permissionRepository
+	 * @param UserDataRepository $userDataRepository
+	 * @param EmailActivationTokenService $emailActivationTokenService
+	 * @param EmailPasswordResetTokenService $emailPasswordResetTokenService
+	 * @param UrlGeneratorInterface $router
+	 * @param Security $security
+	 * @param UserNotificator $userNotificator
 	 */
 	public function __construct(
 		UserRepositoryInterface $userRepository,
@@ -55,7 +115,13 @@ class UserService
 		TokenService $tokenService,
 		AuthService $authService,
 		EntityManagerInterface $entityManager,
-		PermissionRepositoryInterface $permissionRepository
+		PermissionRepositoryInterface $permissionRepository,
+		UserDataRepository $userDataRepository,
+		EmailActivationTokenService $emailActivationTokenService,
+		EmailPasswordResetTokenService $emailPasswordResetTokenService,
+		UrlGeneratorInterface $router,
+		Security $security,
+		UserNotificator $userNotificator
 	)
 	{
 		$this->passwordEncoder = $passwordEncoder;
@@ -65,6 +131,12 @@ class UserService
 		$this->authService = $authService;
 		$this->entityManager = $entityManager;
 		$this->permissionRepository = $permissionRepository;
+		$this->userDataRepository = $userDataRepository;
+		$this->emailActivationTokenService = $emailActivationTokenService;
+		$this->emailPasswordResetTokenService = $emailPasswordResetTokenService;
+		$this->router = $router;
+		$this->security = $security;
+		$this->userNotificator = $userNotificator;
 	}
 
 	/**
@@ -72,6 +144,7 @@ class UserService
 	 * @param string $password
 	 * @param array $roles
 	 * @return User
+	 * @throws Throwable
 	 */
 	public function createUser(string $email, string $password, array $roles): User
 	{
@@ -83,7 +156,14 @@ class UserService
 		});
 	}
 
-
+	/**
+	 * @param int $id
+	 */
+	public function deleteUser(int $id): void
+	{
+		$user = $this->userRepository->getById($id);
+		$this->userRepository->delete($user);
+	}
 
 	/**
 	 * @param string $email
@@ -108,7 +188,6 @@ class UserService
 		return $this->tokenService->getUserByToken($token);
 	}
 
-
 	/**
 	 * @param int $id
 	 * @return User
@@ -116,6 +195,47 @@ class UserService
 	public function getById(int $id): User
 	{
 		return $this->userRepository->getById($id);
+	}
+
+	/**
+	 * @param string $email
+	 * @return User
+	 */
+	public function getByEmail(string $email): User
+	{
+		return $this->userRepository->getByEmail($email);
+	}
+
+	/**
+	 * @param User $user
+	 * @param array $rolesNames
+	 * @return User
+	 */
+	public function setRolesByNames(User $user, array $rolesNames): User
+	{
+		$roles = $this->roleService->getRolesByNames($rolesNames);
+
+		if(count($roles) > 0){
+			foreach ($roles as $cRole) {
+				$user->addRole($cRole);
+			}
+		}
+
+		return $user;
+	}
+
+	/**
+	 * @param User $user
+	 * @param array $data
+	 * @throws ORMException
+	 * @throws OptimisticLockException
+	 */
+	public function setUserData(User $user, array $data)
+	{
+		$userData = UserDataDTO::fromArray($data);
+		$user->setUserData($userData);
+
+		$this->userRepository->save($user);
 	}
 
 	/**
@@ -140,21 +260,109 @@ class UserService
 	}
 
 	/**
-	 * @param User $user
-	 * @param array $rolesNames
+	 * @param SignUp $signUpVO
 	 * @return User
+	 * @throws Throwable
 	 */
-	public function setRolesByNames(User $user, array $rolesNames): User
+	public function signUpEmail(SignUp $signUpVO): User
 	{
-		$roles = $this->roleService->getRolesByNames($rolesNames);
+		$email = $signUpVO->getEmail();
+		$password = $signUpVO->getPassword();
+		$data = ['nickname' => $signUpVO->getNickname()];
 
-		if(count($roles) > 0){
-			foreach ($roles as $cRole) {
-				$user->addRole($cRole);
-			}
-		}
+		return $this->entityManager->transactional(function() use ($email, $password, $data) {
+			$user = $this->createUser($email, $password, ['ROLE_USER']);
+			$this->setUserData($user, $data);
 
-		return $user;
+			$activationToken = $this->emailActivationTokenService->createEmailActivationToken($user);
+			$activationLink = $this->router->generate('activate_email', ['token' => $activationToken->getToken()], UrlGeneratorInterface::ABSOLUTE_URL);
+
+			$this->userNotificator->signUpEmailNotification($user, $activationLink, $password);
+
+			return $this->userRepository->save($user);
+		});
+	}
+
+	/**
+	 * @param User $user
+	 * @throws TransportExceptionInterface
+	 * @throws Exception
+	 */
+	public function resendActivationLinkEmail(User $user): void
+	{
+		$this->emailActivationTokenService->deleteAllUserTokens($user);
+		$activationToken = $this->emailActivationTokenService->createEmailActivationToken($user);
+		$activationLink = $this->router->generate('activate_email', ['token' => $activationToken->getToken()], UrlGeneratorInterface::ABSOLUTE_URL);
+
+		$this->userNotificator->activationLinkEmail($user, $activationLink);
+	}
+
+	/**
+	 * @param $token
+	 * @throws ORMException
+	 * @throws OptimisticLockException
+	 */
+	public function activateUserWithToken($token): void
+	{
+		$token = $this->emailActivationTokenService->getTokenByValue($token);
+		$this->emailActivationTokenService->checkTokenExpired($token);
+
+		$user = $token->getHolder();
+		$this->emailPasswordResetTokenService->deleteAllUserTokens($user);
+
+		$this->activateUser($user);
+	}
+
+	/**
+	 * @param User $user
+	 * @throws ORMException
+	 * @throws OptimisticLockException
+	 */
+	public function activateUser(User $user): void
+	{
+		$user->setActive(User::ACTIVE);
+		$this->userRepository->save($user);
+	}
+
+	/**
+	 * @param ResetPassword $resetPasswordVO
+	 * @throws TransportExceptionInterface
+	 * @throws Exception
+	 */
+	public function sendNewResetPasswordLink(ResetPassword $resetPasswordVO): void
+	{
+		$email = $resetPasswordVO->getEmail();
+
+		$user = $this->getByEmail($email);
+
+		$this->emailPasswordResetTokenService->deleteAllUserTokens($user);
+
+		$resetToken = $this->emailPasswordResetTokenService->createEmailPasswordResetToken($user);
+		$resetPasswordLink = $this->router->generate('reset_password_confirm', ['token' => $resetToken->getToken()], UrlGeneratorInterface::ABSOLUTE_URL);
+
+		$this->userNotificator->resetPasswordLink($user, $resetPasswordLink);
+	}
+
+	/**
+	 * @param $token
+	 * @throws ORMException
+	 * @throws OptimisticLockException
+	 * @throws TransportExceptionInterface
+	 * @throws Exception
+	 */
+	public function resetPasswordByToken(string $token): void
+	{
+		$token = $this->emailPasswordResetTokenService->getTokenByValue($token);
+		$this->emailPasswordResetTokenService->checkTokenExpired($token);
+
+		$user = $token->getHolder();
+		$this->emailPasswordResetTokenService->deleteAllUserTokens($user);
+
+		$password = bin2hex(random_bytes(4));
+		$user->setPassword($this->getEncodedPassword($user, $password));
+		$this->userRepository->save($user);
+
+		$this->userNotificator->resetPasswordSuccess($user, $password);
 	}
 
 }

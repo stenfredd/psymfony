@@ -2,6 +2,7 @@
 
 namespace App\Tests\Auth\Service;
 
+use App\Auth\ValueObject\Login;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
@@ -58,7 +59,11 @@ class AuthServiceTest extends KernelTestCase
 	 */
 	public function testLoginSuccess($email, $pass)
 	{
-		$token = $this->authService->login($email, $pass);
+		$loginVO = new Login();
+		$loginVO->setEmail($email);
+		$loginVO->setPassword($pass);
+
+		$token = $this->authService->login($loginVO);
 		$this->assertIsString($token);
 	}
 
@@ -74,8 +79,12 @@ class AuthServiceTest extends KernelTestCase
 	 */
 	public function testLoginNotExistsUser($email, $pass)
 	{
+		$loginVO = new Login();
+		$loginVO->setEmail($email);
+		$loginVO->setPassword($pass);
+
 		try {
-			$this->authService->login($email, $pass);
+			$this->authService->login($loginVO);
 
 			$this->fail();
 		} catch (HttpException $exception) {
@@ -99,7 +108,11 @@ class AuthServiceTest extends KernelTestCase
 	public function testLoginInvalidCredentials($email, $pass)
 	{
 		try {
-			$this->authService->login($email, $pass);
+			$loginVO = new Login();
+			$loginVO->setEmail($email);
+			$loginVO->setPassword($pass);
+
+			$this->authService->login($loginVO);
 
 			$this->fail();
 		} catch (HttpException $exception) {
@@ -143,14 +156,22 @@ class AuthServiceTest extends KernelTestCase
 
 		for ($i=1;$i<=$_ENV['MAX_LOGIN_FAIL_COUNT'];$i++) {
 			try {
-				$this->authService->login($email, 'wrong');
+				$loginVO = new Login();
+				$loginVO->setEmail($email);
+				$loginVO->setPassword('wrong');
+
+				$this->authService->login($loginVO);
 			} catch (HttpException $e) {
 				$this->assertEquals('Invalid username or password', $e->getMessage());
 			}
 		}
 
 		try {
-			$this->authService->login($email, 'wrong');
+			$loginVO = new Login();
+			$loginVO->setEmail($email);
+			$loginVO->setPassword('wrong');
+
+			$this->authService->login($loginVO);
 		} catch (HttpException $e) {
 			$this->assertEquals('Too many attempts, try again later', $e->getMessage());
 		}

@@ -1,11 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\User\Entity;
 
 use App\Auth\Entity\AuthToken;
 use App\Auth\Entity\LoginFailed;
 use App\User\Repository\UserRepository;
 
+use DateTime;
+use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -18,6 +22,9 @@ use Doctrine\ORM\Mapping as ORM;
  */
 class User implements UserInterface
 {
+	const ACTIVE = 1;
+	const INACTIVE = 0;
+
     /**
 	 * @var int
      * @ORM\Id
@@ -51,13 +58,13 @@ class User implements UserInterface
     private $authTokens;
 
     /**
-	 * @var \DateTime
+	 * @var DateTime
      * @ORM\Column(type="datetime")
      */
     private $createdAt;
 
     /**
-	 * @var \DateTime
+	 * @var DateTime
      * @ORM\Column(type="datetime")
      */
     private $updatedAt;
@@ -66,6 +73,18 @@ class User implements UserInterface
      * @ORM\OneToMany(targetEntity=LoginFailed::class, mappedBy="target", orphanRemoval=true)
      */
     private $loginFaileds;
+
+    /**
+     * @ORM\OneToOne(targetEntity=UserData::class, mappedBy="holder", cascade={"persist", "remove"}, orphanRemoval=true)
+	 * @ORM\JoinColumn(nullable=true)
+     */
+    private $userData;
+
+	/**
+	 * @var int
+	 * @ORM\Column(type="integer", options={"default":"0"})
+	 */
+	private $active = self::INACTIVE;
 
 	/**
 	 * @return string
@@ -91,16 +110,16 @@ class User implements UserInterface
 	 */
 	public function updatedTimestamps(): void
 	{
-		$this->updatedAt = new \DateTime('now');
+		$this->updatedAt = new DateTime('now');
 		if ($this->createdAt === null) {
-			$this->createdAt = new \DateTime('now');
+			$this->createdAt = new DateTime('now');
 		}
 	}
 
 	/**
-	 * @return int|null
+	 * @return int
 	 */
-	public function getId(): ?int
+	public function getId(): int
 	{
 		return $this->id;
 	}
@@ -124,23 +143,23 @@ class User implements UserInterface
 		return $this;
 	}
 
-    /**
-     * A visual identifier that represents this user.
-     *
-     * @see UserInterface
-     */
-    public function getUsername(): string
-    {
-        return (string) $this->email;
-    }
+	/**
+	 * A visual identifier that represents this user.
+	 *
+	 * @see UserInterface
+	 */
+	public function getUsername(): string
+	{
+		return (string)$this->email;
+	}
 
-    /**
-     * @see UserInterface
-     */
-    public function getPassword(): string
-    {
-        return (string) $this->password;
-    }
+	/**
+	 * @see UserInterface
+	 */
+	public function getPassword(): string
+	{
+		return (string)$this->password;
+	}
 
 	/**
 	 * @param string $password
@@ -153,25 +172,25 @@ class User implements UserInterface
 		return $this;
 	}
 
-    /**
-     * Returning a salt is only needed, if you are not using a modern
-     * hashing algorithm (e.g. bcrypt or sodium) in your security.yaml.
-     *
-     * @see UserInterface
-     */
-    public function getSalt(): ?string
-    {
-        return null;
-    }
+	/**
+	 * Returning a salt is only needed, if you are not using a modern
+	 * hashing algorithm (e.g. bcrypt or sodium) in your security.yaml.
+	 *
+	 * @see UserInterface
+	 */
+	public function getSalt(): ?string
+	{
+		return null;
+	}
 
-    /**
-     * @see UserInterface
-     */
-    public function eraseCredentials()
-    {
-        // If you store any temporary, sensitive data on the user, clear it here
-        // $this->plainPassword = null;
-    }
+	/**
+	 * @see UserInterface
+	 */
+	public function eraseCredentials()
+	{
+		// If you store any temporary, sensitive data on the user, clear it here
+		// $this->plainPassword = null;
+	}
 
 	/**
 	 * @see UserInterface
@@ -187,13 +206,13 @@ class User implements UserInterface
 		return $result;
 	}
 
-    /**
-     * @return Collection|Role[]
-     */
-    public function getRolesCollection(): Collection
-    {
-        return $this->roles;
-    }
+	/**
+	 * @return Collection|Role[]
+	 */
+	public function getRolesCollection(): Collection
+	{
+		return $this->roles;
+	}
 
 	/**
 	 * @param Role $role
@@ -219,13 +238,13 @@ class User implements UserInterface
 		return $this;
 	}
 
-    /**
-     * @return Collection|AuthToken[]
-     */
-    public function getAuthTokens(): Collection
-    {
-        return $this->authTokens;
-    }
+	/**
+	 * @return Collection|AuthToken[]
+	 */
+	public function getAuthTokens(): Collection
+	{
+		return $this->authTokens;
+	}
 
 	/**
 	 * @param AuthToken $authToken
@@ -258,18 +277,18 @@ class User implements UserInterface
 	}
 
 	/**
-	 * @return \DateTimeInterface|null
+	 * @return DateTimeInterface|null
 	 */
-	public function getCreatedAt(): ?\DateTimeInterface
+	public function getCreatedAt(): ?DateTimeInterface
 	{
 		return $this->createdAt;
 	}
 
 	/**
-	 * @param \DateTimeInterface $createdAt
+	 * @param DateTimeInterface $createdAt
 	 * @return User $this
 	 */
-	public function setCreatedAt(\DateTimeInterface $createdAt): self
+	public function setCreatedAt(DateTimeInterface $createdAt): self
 	{
 		$this->createdAt = $createdAt;
 
@@ -277,52 +296,105 @@ class User implements UserInterface
 	}
 
 	/**
-	 * @return \DateTimeInterface|null
+	 * @return DateTimeInterface|null
 	 */
-	public function getUpdatedAt(): ?\DateTimeInterface
+	public function getUpdatedAt(): ?DateTimeInterface
 	{
 		return $this->updatedAt;
 	}
 
 	/**
-	 * @param \DateTimeInterface $updatedAt
+	 * @param DateTimeInterface $updatedAt
 	 * @return User $this
 	 */
-	public function setUpdatedAt(\DateTimeInterface $updatedAt): self
+	public function setUpdatedAt(DateTimeInterface $updatedAt): self
 	{
 		$this->updatedAt = $updatedAt;
 
 		return $this;
 	}
 
-    /**
-     * @return Collection|LoginFailed[]
-     */
-    public function getLoginFails(): Collection
-    {
-        return $this->loginFaileds;
-    }
+	/**
+	 * @return Collection|LoginFailed[]
+	 */
+	public function getLoginFails(): Collection
+	{
+		return $this->loginFaileds;
+	}
 
-    public function addLoginFailed(LoginFailed $loginFailed): self
-    {
-        if (!$this->loginFaileds->contains($loginFailed)) {
-            $this->loginFaileds[] = $loginFailed;
-            $loginFailed->setTarget($this);
-        }
+	/**
+	 * @param LoginFailed $loginFailed
+	 * @return $this
+	 */
+	public function addLoginFailed(LoginFailed $loginFailed): self
+	{
+		if (!$this->loginFaileds->contains($loginFailed)) {
+			$this->loginFaileds[] = $loginFailed;
+			$loginFailed->setTarget($this);
+		}
 
-        return $this;
-    }
+		return $this;
+	}
 
-    public function removeLoginFailed(LoginFailed $loginFailed): self
-    {
-        if ($this->loginFaileds->removeElement($loginFailed)) {
-            // set the owning side to null (unless already changed)
-            if ($loginFailed->getTarget() === $this) {
-                $loginFailed->setTarget(null);
-            }
-        }
+	/**
+	 * @param LoginFailed $loginFailed
+	 * @return $this
+	 */
+	public function removeLoginFailed(LoginFailed $loginFailed): self
+	{
+		if ($this->loginFaileds->removeElement($loginFailed)) {
+			// set the owning side to null (unless already changed)
+			if ($loginFailed->getTarget() === $this) {
+				$loginFailed->setTarget(null);
+			}
+		}
 
-        return $this;
-    }
+		return $this;
+	}
+
+	/**
+	 * @return UserData
+	 */
+	public function getUserData(): ?UserData
+	{
+		return $this->userData;
+	}
+
+	/**
+	 * @param UserData $userData
+	 * @return $this
+	 */
+	public function setUserData(UserData $userData): self
+	{
+		// set the owning side of the relation if necessary
+		if ($userData->getHolder() !== $this) {
+			$userData->setHolder($this);
+		}
+
+		$this->userData = $userData;
+
+		return $this;
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getActive(): int
+	{
+		return $this->active;
+	}
+
+	public function isActive(): bool
+	{
+		return $this->getActive() === self::ACTIVE;
+	}
+
+	/**
+	 * @param int $active
+	 */
+	public function setActive(int $active): void
+	{
+		$this->active = $active;
+	}
 
 }

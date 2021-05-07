@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\User\Entity;
 
 use App\User\Repository\RoleRepository;
@@ -7,7 +9,6 @@ use App\User\Repository\RoleRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use \App\User\Entity\Permission;
 
 /**
  * @ORM\Entity(repositoryClass=RoleRepository::class)
@@ -64,9 +65,9 @@ class Role
 	}
 
 	/**
-	 * @return int|null
+	 * @return int
 	 */
-	public function getId(): ?int
+	public function getId(): int
 	{
 		return $this->id;
 	}
@@ -153,7 +154,7 @@ class Role
     }
 
 	/**
-	 * @param \App\User\Entity\Permission $permission
+	 * @param Permission $permission
 	 * @return $this
 	 */
 	public function addPermission(Permission $permission): self
@@ -165,7 +166,11 @@ class Role
         return $this;
     }
 
-    public function removePermission(Permission $permission): self
+	/**
+	 * @param Permission $permission
+	 * @return $this
+	 */
+	public function removePermission(Permission $permission): self
     {
         $this->permissions->removeElement($permission);
 

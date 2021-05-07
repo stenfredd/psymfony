@@ -32,7 +32,17 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+    App\User\Service\UserNotificator:
+        arguments: ['%env(SITE_NAME)%']
     App\Auth\Security\PasswordEncoder:
         arguments: ['%env(STATIC_SALT)%']
     App\Auth\Service\AuthService:
         arguments: ['%env(MAX_LOGIN_FAIL_COUNT)%', '%env(MAX_LOGIN_FAIL_PERIOD)%', '%env(LOGIN_FAIL_BLOCKING_TIME)%']
+    App\Mail\Service\Mailer:
+        arguments: ['%env(EMAIL_SEND_FROM)%']
+    App\Auth\Service\TokenService:
+        arguments: ['%env(AUTH_TOKEN_LIFETIME)%']
+    App\User\Service\EmailActivationTokenService:
+        arguments: ['%env(ACTIVATION_TOKEN_LIFETIME)%']
+    App\User\Service\EmailPasswordResetTokenService:
+        arguments: ['%env(PASSWORD_RESET_TOKEN_LIFETIME)%']

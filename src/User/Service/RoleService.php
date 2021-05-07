@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\User\Service;
 
 use App\User\Entity\Role;
@@ -11,10 +13,14 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class RoleService
 {
 
-	/** @var RoleRepositoryInterface */
+	/**
+	 * @var RoleRepositoryInterface
+	 */
 	private $roleRepository;
 
-	/** @var PermissionService */
+	/**
+	 * @var PermissionService
+	 */
 	private $permissionService;
 
 	/**
@@ -37,7 +43,7 @@ class RoleService
 	 */
 	public function createRole(string $name, string $description): Role
 	{
-		$role = new Role;
+		$role = new Role();
 
 		$role->setName($name);
 		$role->setDescription($description);

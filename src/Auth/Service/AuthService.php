@@ -1,21 +1,25 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Auth\Service;
 
-use App\Auth\Entity\LoginFailed;
-use App\Auth\Exception\LoginFailedCountException;
-use App\Auth\Repository\LoginFailedRepository;
+use App\Auth\ValueObject\Login;
 use App\User\Entity\User;
+use App\Auth\Entity\LoginFailed;
 use App\User\Repository\UserRepositoryInterface;
+use App\Auth\Repository\LoginFailedRepositoryInterface;
 use App\Auth\Security\PasswordEncoder;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
-use LogicException;
+use Exception;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
+use App\Auth\Exception\LoginFailedCountException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
+use LogicException;
 
 class AuthService
 {
@@ -35,7 +39,7 @@ class AuthService
 	private $tokenService;
 
 	/**
-	 * @var LoginFailedRepository
+	 * @var LoginFailedRepositoryInterface
 	 */
 	private $loginFailedRepository;
 
@@ -68,7 +72,7 @@ class AuthService
 	 * @param UserRepositoryInterface $userRepository
 	 * @param PasswordEncoder $passwordEncoder
 	 * @param TokenService $tokenService
-	 * @param LoginFailedRepository $loginFailedRepository
+	 * @param LoginFailedRepositoryInterface $loginFailedRepository
 	 * @param RequestStack $requestStack
 	 */
 	public function __construct(
@@ -78,7 +82,7 @@ class AuthService
 		UserRepositoryInterface $userRepository,
 		PasswordEncoder $passwordEncoder,
 		TokenService $tokenService,
-		LoginFailedRepository $loginFailedRepository,
+		LoginFailedRepositoryInterface $loginFailedRepository,
 		RequestStack $requestStack
 	)
 	{
@@ -93,16 +97,15 @@ class AuthService
 	}
 
 	/**
-	 * @param string $email
-	 * @param string $password
-	 * @throws HttpException
-	 * @throws LogicException
+	 * @param Login $loginVO
 	 * @return string
 	 */
-	public function login(string $email, string $password): string
+	public function login(Login $loginVO): string
 	{
+		$email = $loginVO->getEmail();
+		$password = $loginVO->getPassword();
+
 		try {
-			$email = strtolower($email);
 			$user = $this->userRepository->getByEmail($email);
 			$this->checkLoginFails($user);
 			$this->verifyPassword($user, $password);
@@ -119,7 +122,7 @@ class AuthService
 		catch (LoginFailedCountException $e) {
 			throw new HttpException(403, "Too many attempts, try again later");
 		}
-		catch (\Exception $e) {
+		catch (Exception $e) {
 			throw new LogicException('Authentication failed');
 		}
 	}
@@ -149,8 +152,9 @@ class AuthService
 
 	/**
 	 * @param User $user
+	 * @return LoginFailed
 	 */
-	public function saveFailedLogin(User $user)
+	public function saveFailedLogin(User $user): LoginFailed
 	{
 		$fail = new LoginFailed();
 		$fail->setTarget($user);
@@ -158,27 +162,28 @@ class AuthService
 			$fail->setIp($this->request->getClientIp());
 			$fail->setClient($this->request->headers->get('User-Agent'));
 		}
-
-		$this->loginFailedRepository->save($fail);
+		return $this->loginFailedRepository->save($fail);
 	}
 
 	/**
 	 * @param User $user
 	 * @throws LoginFailedCountException
+	 * @throws Exception
 	 */
-	private function checkLoginFails(User $user)
+	private function checkLoginFails(User $user): void
 	{
 		$this->clearOldLoginFails();
 
 		$period = $this->loginFailsPeriod + $this->loginFailsBlockingTime;
-		$fails = $this->loginFailedRepository->userFailsCount($user, $period);
+		$lastTime = new \DateTime(sprintf('-%d second', $period));
+		$fails = $this->loginFailedRepository->userFailsCount($user, $lastTime);
 
 		if ((count($fails) >= $this->maxLoginFailsCount) && (count($fails) > 0)) {
 			throw new LoginFailedCountException();
 		}
 	}
 
-	private function clearOldLoginFails()
+	private function clearOldLoginFails(): void
 	{
 		$lastTime = new \DateTime('now');
 		$lastTime->modify(sprintf('-%d second', ($this->loginFailsPeriod + $this->loginFailsBlockingTime)));

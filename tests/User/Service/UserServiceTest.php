@@ -2,6 +2,7 @@
 
 namespace App\Tests\User\Service;
 
+use App\Auth\ValueObject\SignUp;
 use App\User\Entity\User;
 
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -25,6 +26,9 @@ class UserServiceTest extends KernelTestCase
 
 	private $added_users = [];
 
+	private $emailActivationTokenService;
+	private $emailPasswordResetTokenService;
+
 
 	protected function setUp(): void
 	{
@@ -36,6 +40,9 @@ class UserServiceTest extends KernelTestCase
 		$this->tokenService = $container->get('App\Auth\Service\TokenService');
 		$this->roleService = $container->get('App\User\Service\RoleService');
 		$this->permissionService = $container->get('App\User\Service\PermissionService');
+		$this->emailActivationTokenService = $container->get('App\User\Service\EmailActivationTokenService');
+		$this->emailPasswordResetTokenService = $container->get('App\User\Service\EmailPasswordResetTokenService');
+
 		$this->em = $container->get('doctrine.orm.entity_manager');
 
 		$this->em->getConnection()->beginTransaction();
@@ -154,4 +161,42 @@ class UserServiceTest extends KernelTestCase
 		$user = $this->userService->createUser('createuserdubletestmail@gmail.com', '111111', ['ROLE_USER']);
 		$user = $this->userService->createUser('createuserdubletestmail@gmail.com', '111111', ['ROLE_USER']);
 	}
+
+	public function testSignUpEmail()
+	{
+		$signUpVO = new SignUp();
+		$signUpVO->setEmail('ssignupemail@gmail.com');
+		$signUpVO->setPassword('111111');
+		$signUpVO->setNickname('testsignupnickname');
+
+		$user = $this->userService->signUpEmail($signUpVO);
+		$this->assertInstanceOf(User::class, $user);
+	}
+
+	public function testActivateUserWithToken()
+	{
+		$user = $this->userService->createUser('testactivationwtokenuser@gmail.com', '111111', ['ROLE_USER']);
+
+		$activationToken = $this->emailActivationTokenService->createEmailActivationToken($user);
+
+		$this->userService->activateUserWithToken($activationToken->getToken());
+
+		$this->assertTrue($user->isActive());
+	}
+
+	public function testResetPasswordByToken()
+	{
+		$user = $this->userService->createUser('testresetpassword@gmail.com', '111111', ['ROLE_USER']);
+		$this->userService->setUserData($user, ['nickname' => 'testresetpasswordnick']);
+		$oldPassword = $user->getPassword();
+
+		$resetToken = $this->emailPasswordResetTokenService->createEmailPasswordResetToken($user);
+
+		$this->userService->resetPasswordByToken($resetToken->getToken());
+
+		$newPassword = $user->getPassword();
+
+		$this->assertNotEquals($oldPassword, $newPassword);
+	}
+
 }

@@ -3,6 +3,9 @@
 namespace App\Tests\Auth\Controller;
 
 use App\Auth\Controller\AuthController;
+use App\Auth\ValueObject\Login;
+use App\Auth\ValueObject\SignUp;
+use App\Exception\ValidationException;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
@@ -52,7 +55,11 @@ class AuthControllerTest extends WebTestCase
 
 		$user = $this->userService->createUser($this->email, $this->pass, []);
 
-		$authToken = $this->authService->login($this->email, $this->pass);
+		$loginVO = new Login();
+		$loginVO->setEmail($this->email);
+		$loginVO->setPassword($this->pass);
+
+		$authToken = $this->authService->login($loginVO);
 
 		$this->client->request('POST', '/auth/permission-test', [], [], [
 			'HTTP_X-AUTH-TOKEN' => $authToken,
@@ -73,13 +80,43 @@ class AuthControllerTest extends WebTestCase
 		$this->roleService->setPermissionsByNames($role, ['PRMPTEST']);
 		$user = $this->userService->createUser($this->email, $this->pass, ['ROLE_TESTPRM']);
 
-		$authToken = $this->authService->login($this->email, $this->pass);
+		$loginVO = new Login();
+		$loginVO->setEmail($this->email);
+		$loginVO->setPassword($this->pass);
+
+		$authToken = $this->authService->login($loginVO);
 
 		$this->client->request('POST', '/auth/permission-test', [], [], [
 			'HTTP_X-AUTH-TOKEN' => $authToken,
 		]);
 
 		$this->assertResponseIsSuccessful();
+	}
+
+	public function testSignUpEmail()
+	{
+
+		$this->client->request('POST', '/auth/sign-up', [
+			'email' => 'signupemail@gmail.com',
+			'password' => '111111',
+			'nickname' => 'testsignupnickname'
+		]);
+
+		$this->assertResponseIsSuccessful();
+	}
+
+	public function testSignUpEmailValidationFailed()
+	{
+		$this->expectException(ValidationException::class);
+		$this->client->catchExceptions(false);
+
+		$this->client->request('POST', '/auth/sign-up', [
+			'email' => 'signupemailgmail.com',
+			'password' => '111111',
+			'nickname' => 'testsignupnickname'
+		]);
+
+		$this->assertResponseStatusCodeSame(500);
 	}
 
 }

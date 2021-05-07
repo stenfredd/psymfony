@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Auth\Security;
 
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
@@ -7,10 +9,14 @@ use Symfony\Component\Security\Core\User\UserInterface;
 
 class PasswordEncoder implements UserPasswordEncoderInterface
 {
-	/** @var UserPasswordEncoderInterface */
+	/**
+	 * @var UserPasswordEncoderInterface
+	 */
 	private $passwordEncoder;
 
-	/** @var string */
+	/**
+	 * @var string
+	 */
 	private $staticSalt;
 
 	/**
@@ -29,7 +35,7 @@ class PasswordEncoder implements UserPasswordEncoderInterface
 	 * @param string $plainPassword
 	 * @return string
 	 */
-	public function encodePassword(UserInterface $user, string $plainPassword)
+	public function encodePassword(UserInterface $user, string $plainPassword): string
 	{
 		$plainPassword = $this->getPasswordWithSalt($plainPassword);
 
@@ -40,7 +46,7 @@ class PasswordEncoder implements UserPasswordEncoderInterface
 	 * @param string $plainPassword
 	 * @return string
 	 */
-	public function getPasswordWithSalt(string $plainPassword)
+	public function getPasswordWithSalt(string $plainPassword): string
 	{
 		return $plainPassword.$this->staticSalt;
 	}
@@ -50,7 +56,7 @@ class PasswordEncoder implements UserPasswordEncoderInterface
 	 * @param string $plainPassword
 	 * @return bool
 	 */
-	public function isPasswordValid(UserInterface $user, string $plainPassword)
+	public function isPasswordValid(UserInterface $user, string $plainPassword): bool
 	{
 		$password = $this->getPasswordWithSalt($plainPassword);
 

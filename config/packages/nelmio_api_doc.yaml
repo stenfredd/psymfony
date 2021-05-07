@@ -1,0 +1,9 @@
+nelmio_api_doc:
+    documentation:
+        info:
+            title: Project Symfony
+            description: Project symfony appllication api
+            version: 1.0.0
+    areas:
+        path_patterns:
+            - ^/auth(?!/permission-test$)

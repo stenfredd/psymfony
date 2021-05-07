@@ -1,26 +1,39 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Auth\Service;
 
 use App\Auth\Entity\AuthToken;
 use App\User\Entity\User;
 use App\Auth\Repository\AuthTokenRepositoryInterface;
+use DateTime;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
+use Exception;
 
 class TokenService
 {
 
-	/** @var AuthTokenRepositoryInterface */
+	/**
+	 * @var AuthTokenRepositoryInterface
+	 */
 	private $tokenRepository;
 
 	/**
+	 * @var int
+	 */
+	private $authTokenLifetime;
+
+	/**
 	 * TokenService constructor.
+	 * @param int $authTokenLifetime
 	 * @param AuthTokenRepositoryInterface $tokenRepository
 	 */
-	public function __construct(AuthTokenRepositoryInterface $tokenRepository)
+	public function __construct(int $authTokenLifetime, AuthTokenRepositoryInterface $tokenRepository)
 	{
 		$this->tokenRepository = $tokenRepository;
+		$this->authTokenLifetime = $authTokenLifetime;
 	}
 
 	/**
@@ -48,7 +61,7 @@ class TokenService
 	 */
 	public function isTokenActual(AuthToken $authToken): bool
 	{
-		$now = new \DateTime('now');
+		$now = new DateTime('now');
 		$expired_at = $authToken->getExpiredAt();
 
 		if ($now < $expired_at) {
@@ -72,13 +85,16 @@ class TokenService
 	 * @return AuthToken
 	 * @throws ORMException
 	 * @throws OptimisticLockException
-	 * @throws \Exception
+	 * @throws Exception
 	 */
 	public function createToken(User $user): AuthToken
 	{
-		$token = new AuthToken;
+		$expiredAt = new DateTime(sprintf('+%d second', $this->authTokenLifetime));
+
+		$token = new AuthToken();
 		$token->setValue($this->generateToken($user));
 		$token->setHolder($user);
+		$token->setExpiredAt($expiredAt);
 
 		$this->tokenRepository->save($token);
 
@@ -88,7 +104,7 @@ class TokenService
 	/**
 	 * @param User $user
 	 * @return string
-	 * @throws \Exception
+	 * @throws Exception
 	 */
 	public function generateToken(User $user): string
 	{

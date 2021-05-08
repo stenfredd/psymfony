@@ -2,7 +2,8 @@
 
 namespace App\Tests\Auth\Service;
 
-use App\Auth\ValueObject\Login;
+
+use App\User\Authorization\Email\ValueObject\Login;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
@@ -13,7 +14,8 @@ class AuthServiceTest extends KernelTestCase
 
 	private $em;
 
-	private $authService;
+	private $emailAuthService;
+	private $systemAuthService;
 	private $userService;
 
 	private $users_data = [
@@ -21,13 +23,16 @@ class AuthServiceTest extends KernelTestCase
 		['testmail1@gmail.com', 'testpassword1', ['ROLE_USER']]
 	];
 
+
+
 	protected function setUp(): void
 	{
 		self::bootKernel();
 
 		$container = self::$container;
 
-		$this->authService = $container->get('App\Auth\Service\AuthService');
+		$this->systemAuthService = $container->get('App\User\Authorization\System\Service\AuthService');
+		$this->emailAuthService = $container->get('App\User\Authorization\Email\Service\AuthService');
 		$this->userService = $container->get('App\User\Service\UserService');
 		$this->em = $container->get('doctrine.orm.entity_manager');
 
@@ -63,7 +68,7 @@ class AuthServiceTest extends KernelTestCase
 		$loginVO->setEmail($email);
 		$loginVO->setPassword($pass);
 
-		$token = $this->authService->login($loginVO);
+		$token = $this->emailAuthService->login($loginVO);
 		$this->assertIsString($token);
 	}
 
@@ -84,7 +89,7 @@ class AuthServiceTest extends KernelTestCase
 		$loginVO->setPassword($pass);
 
 		try {
-			$this->authService->login($loginVO);
+			$this->emailAuthService->login($loginVO);
 
 			$this->fail();
 		} catch (HttpException $exception) {
@@ -112,7 +117,7 @@ class AuthServiceTest extends KernelTestCase
 			$loginVO->setEmail($email);
 			$loginVO->setPassword($pass);
 
-			$this->authService->login($loginVO);
+			$this->emailAuthService->login($loginVO);
 
 			$this->fail();
 		} catch (HttpException $exception) {
@@ -128,7 +133,7 @@ class AuthServiceTest extends KernelTestCase
 
 		$user = $this->userService->getNewUser($email, $password);
 
-		$this->authService->verifyPassword($user, $password);
+		$this->systemAuthService->verifyPassword($user, $password);
 
 		$this->assertTrue( true );
 	}
@@ -144,7 +149,7 @@ class AuthServiceTest extends KernelTestCase
 
 		$password = 'wrong';
 
-		$this->authService->verifyPassword($user, $password);
+		$this->systemAuthService->verifyPassword($user, $password);
 	}
 
 	public function testManyLoginFailAttempts()
@@ -160,7 +165,7 @@ class AuthServiceTest extends KernelTestCase
 				$loginVO->setEmail($email);
 				$loginVO->setPassword('wrong');
 
-				$this->authService->login($loginVO);
+				$this->emailAuthService->login($loginVO);
 			} catch (HttpException $e) {
 				$this->assertEquals('Invalid username or password', $e->getMessage());
 			}
@@ -171,7 +176,7 @@ class AuthServiceTest extends KernelTestCase
 			$loginVO->setEmail($email);
 			$loginVO->setPassword('wrong');
 
-			$this->authService->login($loginVO);
+			$this->emailAuthService->login($loginVO);
 		} catch (HttpException $e) {
 			$this->assertEquals('Too many attempts, try again later', $e->getMessage());
 		}

@@ -2,7 +2,8 @@
 
 namespace App\Tests\User\Service;
 
-use App\Auth\ValueObject\SignUp;
+
+use App\User\Authorization\Email\ValueObject\SignUp;
 use App\User\Entity\User;
 
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -28,6 +29,7 @@ class UserServiceTest extends KernelTestCase
 
 	private $emailActivationTokenService;
 	private $emailPasswordResetTokenService;
+	private $emailAuthService;
 
 
 	protected function setUp(): void
@@ -37,11 +39,12 @@ class UserServiceTest extends KernelTestCase
 		$container = self::$container;
 
 		$this->userService = $container->get('App\User\Service\UserService');
-		$this->tokenService = $container->get('App\Auth\Service\TokenService');
+		$this->emailAuthService = $container->get('App\User\Authorization\Email\Service\AuthService');
+		$this->tokenService = $container->get('App\User\Authorization\System\Service\TokenService');
 		$this->roleService = $container->get('App\User\Service\RoleService');
 		$this->permissionService = $container->get('App\User\Service\PermissionService');
-		$this->emailActivationTokenService = $container->get('App\User\Service\EmailActivationTokenService');
-		$this->emailPasswordResetTokenService = $container->get('App\User\Service\EmailPasswordResetTokenService');
+		$this->emailActivationTokenService = $container->get('App\User\Authorization\Email\Service\ActivationTokenService');
+		$this->emailPasswordResetTokenService = $container->get('App\User\Authorization\Email\Service\PasswordResetTokenService');
 
 		$this->em = $container->get('doctrine.orm.entity_manager');
 
@@ -169,7 +172,7 @@ class UserServiceTest extends KernelTestCase
 		$signUpVO->setPassword('111111');
 		$signUpVO->setNickname('testsignupnickname');
 
-		$user = $this->userService->signUpEmail($signUpVO);
+		$user = $this->emailAuthService->signUpEmail($signUpVO);
 		$this->assertInstanceOf(User::class, $user);
 	}
 
@@ -179,7 +182,7 @@ class UserServiceTest extends KernelTestCase
 
 		$activationToken = $this->emailActivationTokenService->createEmailActivationToken($user);
 
-		$this->userService->activateUserWithToken($activationToken->getToken());
+		$this->emailAuthService->activateUserWithToken($activationToken->getToken());
 
 		$this->assertTrue($user->isActive());
 	}
@@ -192,7 +195,7 @@ class UserServiceTest extends KernelTestCase
 
 		$resetToken = $this->emailPasswordResetTokenService->createEmailPasswordResetToken($user);
 
-		$this->userService->resetPasswordByToken($resetToken->getToken());
+		$this->emailAuthService->resetPasswordByToken($resetToken->getToken());
 
 		$newPassword = $user->getPassword();
 

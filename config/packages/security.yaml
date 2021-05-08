@@ -6,7 +6,7 @@ security:
 
     providers:
         app_user_provider:
-            id: App\Auth\Security\UserProvider
+            id: App\User\Authorization\System\Security\UserProvider
 
     firewalls:
         dev:
@@ -18,7 +18,7 @@ security:
             provider: app_user_provider
             guard:
                 authenticators:
-                    - App\Auth\Security\TokenAuthenticator
+                    - App\User\Authorization\System\Security\TokenAuthenticator
 
             # activate different ways to authenticate
             # https://symfony.com/doc/current/security.html#firewalls-authentication

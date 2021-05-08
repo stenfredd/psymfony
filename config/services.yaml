@@ -26,23 +26,20 @@ services:
     App\Controller\:
         resource: '../src/Controller/'
         tags: ['controller.service_arguments']
-    App\Auth\Controller\:
-        resource: '../src/Auth/Controller/'
-        tags: ['controller.service_arguments']
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
-    App\User\Service\UserNotificator:
+    App\User\Authorization\Email\Service\Notificator:
         arguments: ['%env(SITE_NAME)%']
-    App\Auth\Security\PasswordEncoder:
+    App\User\Authorization\System\Security\PasswordEncoder:
         arguments: ['%env(STATIC_SALT)%']
-    App\Auth\Service\AuthService:
+    App\User\Authorization\System\Service\AuthService:
         arguments: ['%env(MAX_LOGIN_FAIL_COUNT)%', '%env(MAX_LOGIN_FAIL_PERIOD)%', '%env(LOGIN_FAIL_BLOCKING_TIME)%']
-    App\Mail\Service\Mailer:
+    App\Service\Mail\Mailer:
         arguments: ['%env(EMAIL_SEND_FROM)%']
-    App\Auth\Service\TokenService:
+    App\User\Authorization\System\Service\TokenService:
         arguments: ['%env(AUTH_TOKEN_LIFETIME)%']
-    App\User\Service\EmailActivationTokenService:
+    App\User\Authorization\Email\Service\ActivationTokenService:
         arguments: ['%env(ACTIVATION_TOKEN_LIFETIME)%']
-    App\User\Service\EmailPasswordResetTokenService:
+    App\User\Authorization\Email\Service\PasswordResetTokenService:
         arguments: ['%env(PASSWORD_RESET_TOKEN_LIFETIME)%']

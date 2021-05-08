@@ -26,6 +26,12 @@ doctrine:
             Auth:
                 is_bundle: false
                 type: annotation
-                dir: '%kernel.project_dir%/src/Auth/Entity'
-                prefix: 'App\Auth\Entity'
+                dir: '%kernel.project_dir%/src/User/Authorization/System/Entity'
+                prefix: 'App\User\Authorization\System\Entity'
+                alias: App\User
+            AuthEmail:
+                is_bundle: false
+                type: annotation
+                dir: '%kernel.project_dir%/src/User/Authorization/Email/Entity'
+                prefix: 'App\User\Authorization\Email\Entity'
                 alias: App\User

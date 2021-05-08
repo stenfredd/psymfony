@@ -1,8 +1,8 @@
 controllers:
     resource: ../../src/Controller/
     type: annotation
-api_bids_auth:
-    resource: ../../src/Auth/Controller/
+api_auth:
+    resource: ../../src/User/Authorization/Email/Controller/
     type: annotation
 kernel:
     resource: ../../src/Kernel.php

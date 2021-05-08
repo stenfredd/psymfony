@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\User\Entity;
 
-use App\Auth\Entity\AuthToken;
-use App\Auth\Entity\LoginFailed;
+
+use App\User\Authorization\System\Entity\AuthToken;
+use App\User\Authorization\System\Entity\LoginFailed;
 use App\User\Repository\UserRepository;
 
 use DateTime;

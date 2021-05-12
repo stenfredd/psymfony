@@ -44,7 +44,7 @@ class UserRepository extends ServiceEntityRepository implements UserRepositoryIn
 
 			return $user;
 		} catch (UniqueConstraintViolationException $exception) {
-			throw new \LogicException(sprintf('User with email "%s" already exists', $user->getEmail()));
+			throw new \LogicException('User with this email is already registered');
 		}
 
 	}

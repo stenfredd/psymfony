@@ -23,6 +23,8 @@ class EmailAuthControllerTest extends WebTestCase
 	private $email = 'premissiontestuser@gmail.com';
 	private $pass = '111111';
 	private $authToken = '111111';
+	private $activationTokenService;
+	private $emailPasswordResetTokenService;
 
 
 	protected function setUp(): void
@@ -36,6 +38,8 @@ class EmailAuthControllerTest extends WebTestCase
 		$this->userService = $container->get('App\User\Service\UserService');
 		$this->roleService = $container->get('App\User\Service\RoleService');
 		$this->permissionService = $container->get('App\User\Service\PermissionService');
+		$this->activationTokenService = $container->get('App\User\Authorization\Email\Service\ActivationTokenService');
+		$this->emailPasswordResetTokenService = $container->get('App\User\Authorization\Email\Service\PasswordResetTokenService');
 		$this->em = $container->get('doctrine.orm.entity_manager');
 
 		$this->em->getConnection()->beginTransaction();
@@ -60,7 +64,7 @@ class EmailAuthControllerTest extends WebTestCase
 
 		$authToken = $this->emailAuthService->login($loginVO);
 
-		$this->client->request('POST', '/auth/email/permission-test', [], [], [
+		$this->client->request('POST', '/api/auth/email/permission-test', [], [], [
 			'HTTP_X-AUTH-TOKEN' => $authToken,
 		]);
 
@@ -85,7 +89,7 @@ class EmailAuthControllerTest extends WebTestCase
 
 		$authToken = $this->emailAuthService->login($loginVO);
 
-		$this->client->request('POST', '/auth/email/permission-test', [], [], [
+		$this->client->request('POST', '/api/auth/email/permission-test', [], [], [
 			'HTTP_X-AUTH-TOKEN' => $authToken,
 		]);
 
@@ -94,12 +98,11 @@ class EmailAuthControllerTest extends WebTestCase
 
 	public function testSignUpEmail()
 	{
-
-		$this->client->request('POST', '/auth/email/sign-up', [
+		$this->client->request('POST', '/api/auth/email/sign-up', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
 			'email' => 'signupemail@gmail.com',
 			'password' => '111111',
 			'nickname' => 'testsignupnickname'
-		]);
+		]));
 
 		$this->assertResponseIsSuccessful();
 	}
@@ -109,15 +112,109 @@ class EmailAuthControllerTest extends WebTestCase
 		$this->expectException(ValidationException::class);
 		$this->client->catchExceptions(false);
 
-		$this->client->request('POST', '/auth/email/sign-up', [
+		$this->client->request('POST', '/api/auth/email/sign-up', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
 			'email' => 'signupemailgmail.com',
 			'password' => '111111',
 			'nickname' => 'testsignupnickname'
-		]);
+		]));
 
 		$this->assertResponseStatusCodeSame(500);
 	}
 
+	public function testResendActivationLink()
+	{
+		$this->client->catchExceptions(false);
+
+		$user = $this->userService->createUser($this->email, $this->pass, []);
+		$this->userService->setUserData($user, ['nickname' => 'testnickname']);
+
+		$loginVO = new Login();
+		$loginVO->setEmail($this->email);
+		$loginVO->setPassword($this->pass);
+
+		$authToken = $this->emailAuthService->login($loginVO);
+
+		$this->client->request('POST', '/api/auth/email/resend-activation-link', [], [], [
+			'CONTENT_TYPE' => 'application/json',
+			'HTTP_X-AUTH-TOKEN' => $authToken
+		]);
+
+		$this->assertResponseIsSuccessful();
+	}
+
+	public function testActivateEmail()
+	{
+		$this->client->catchExceptions(false);
+
+		$user = $this->userService->createUser($this->email, $this->pass, []);
+		$this->userService->setUserData($user, ['nickname' => 'testnickname']);
+
+		$activationToken = $this->activationTokenService->createEmailActivationToken($user);
+
+		$this->client->request('GET', '/api/auth/email/activate-user', ['token' => $activationToken->getToken()]);
+
+		$this->assertResponseRedirects('/account-activated');
+	}
+
+	public function testActivateEmailFailed()
+	{
+		$this->client->catchExceptions(false);
+
+		$this->client->request('GET', '/api/auth/email/activate-user', ['token' => 'wrongToken']);
+
+		$this->assertResponseRedirects('/account-activation-filed');
+	}
+
+	public function testResetPassword()
+	{
+		$this->client->catchExceptions(false);
+
+		$user = $this->userService->createUser($this->email, $this->pass, []);
+		$this->userService->setUserData($user, ['nickname' => 'testnickname']);
+
+		$this->client->request('POST', '/api/auth/email/reset-password', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+			'email' => $this->email
+		]));
+
+		$this->assertResponseIsSuccessful();
+	}
 
 
+	public function testResetPasswordFail()
+	{
+		$this->expectException(HttpException::class);
+		$this->client->catchExceptions(false);
+
+		$user = $this->userService->createUser($this->email, $this->pass, []);
+		$this->userService->setUserData($user, ['nickname' => 'testnickname']);
+
+		$this->client->request('POST', '/api/auth/email/reset-password', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+			'email' => 'wrongemail@gmail.com'
+		]));
+
+		$this->assertResponseStatusCodeSame(500);
+	}
+
+	public function testResetPasswordConfirm()
+	{
+		$this->client->catchExceptions(false);
+
+		$user = $this->userService->createUser($this->email, $this->pass, []);
+		$this->userService->setUserData($user, ['nickname' => 'testnickname']);
+
+		$resetToken = $this->emailPasswordResetTokenService->createEmailPasswordResetToken($user);
+
+		$this->client->request('GET', '/api/auth/email/reset-password-confirm', ['token' => $resetToken->getToken()]);
+
+		$this->assertResponseRedirects('/password-changed');
+	}
+
+	public function testResetPasswordConfirmFailed()
+	{
+		$this->client->catchExceptions(false);
+
+		$this->client->request('GET', '/api/auth/email/reset-password-confirm', ['token' => 'wrongtoken']);
+
+		$this->assertResponseRedirects('/password-change-filed');
+	}
 }

@@ -5,27 +5,27 @@ namespace App\User\Authorization\Email\ValueObject;
 use App\Interfaces\RequestValueObjectInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 
-class ResetPassword implements RequestValueObjectInterface
+class ActivateEmail implements RequestValueObjectInterface
 {
 	/**
-	 * @Assert\Email
 	 * @Assert\NotNull
 	 */
-	private $email;
+	private $token;
 
 	/**
 	 * @return mixed
 	 */
-	public function getEmail()
+	public function getToken()
 	{
-		return $this->email;
+		return $this->token;
 	}
 
 	/**
-	 * @param mixed $email
+	 * @param mixed $token
 	 */
-	public function setEmail($email): void
+	public function setToken($token): void
 	{
-		$this->email = strtolower($email);
+		$this->token = $token;
 	}
+
 }

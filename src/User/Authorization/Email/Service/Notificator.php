@@ -2,7 +2,6 @@
 
 namespace App\User\Authorization\Email\Service;
 
-
 use App\Service\Mail\MailData;
 use App\Service\Mail\Mailer;
 use App\User\Entity\User;
@@ -12,11 +11,6 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 class Notificator
 {
 	/**
-	 * @var string
-	 */
-	private $site_name;
-
-	/**
 	 * @var Mailer
 	 */
 	private $mailer;
@@ -25,16 +19,30 @@ class Notificator
 	 * @var UrlGeneratorInterface
 	 */
 	private $router;
+	/**
+	 * @var string
+	 */
+	private $activationLinkRedirectTo;
+
+	/**
+	 * @var string
+	 */
+	private $resetPasswordRedirectTo;
+
+	/**
+	 * @var string
+	 */
+	private $siteName;
 
 	/**
 	 * UserNotificator constructor.
-	 * @param string $site_name
+	 * @param string $siteName
 	 * @param Mailer $mailer
 	 * @param UrlGeneratorInterface $router
 	 */
-	public function __construct(string $site_name, Mailer $mailer, UrlGeneratorInterface $router)
+	public function __construct(string $siteName, Mailer $mailer, UrlGeneratorInterface $router)
 	{
-		$this->site_name = $site_name;
+		$this->siteName = $siteName;
 		$this->mailer = $mailer;
 		$this->router = $router;
 	}
@@ -49,9 +57,9 @@ class Notificator
 	{
 		$activationLink = $this->router->generate('activate_email', ['token' => $activationToken], UrlGeneratorInterface::ABSOLUTE_URL);
 
-		$mail = new MailData('email_signup', sprintf('Благодарим за регистрацию на сайте %s!', $this->site_name), $user->getEmail(), [
+		$mail = new MailData('email_signup', sprintf('Благодарим за регистрацию на сайте %s!', $this->siteName), $user->getEmail(), [
 			'nickname' => $user->getUserData()->getNickname(),
-			'site_name' => $this->site_name,
+			'site_name' => $this->siteName,
 			'activation_link' => $activationLink,
 			'user_email' => $user->getEmail(),
 			'user_password' => $password
@@ -68,9 +76,9 @@ class Notificator
 	{
 		$activationLink = $this->router->generate('activate_email', ['token' => $activationToken], UrlGeneratorInterface::ABSOLUTE_URL);
 
-		$mail = new MailData('email_resend_activation_link', sprintf('Активируйте аккаунт на сайте %s!', $this->site_name), $user->getEmail(), [
+		$mail = new MailData('email_resend_activation_link', sprintf('Активируйте аккаунт на сайте %s!', $this->siteName), $user->getEmail(), [
 			'nickname' => $user->getUserData()->getNickname(),
-			'site_name' => $this->site_name,
+			'site_name' => $this->siteName,
 			'activation_link' => $activationLink
 		]);
 		$this->mailer->send($mail);
@@ -85,9 +93,9 @@ class Notificator
 	{
 		$resetPasswordLink = $this->router->generate('reset_password_confirm', ['token' => $resetPasswordToken], UrlGeneratorInterface::ABSOLUTE_URL);
 
-		$mail = new MailData('email_password_reset', sprintf('Ваш пароль на сайте %s был изменен', $this->site_name), $user->getEmail(), [
+		$mail = new MailData('email_password_reset', sprintf('Ваш пароль на сайте %s был изменен', $this->siteName), $user->getEmail(), [
 			'reset_password_link' => $resetPasswordLink,
-			'site_name' => $this->site_name,
+			'site_name' => $this->siteName,
 			'nickname' => $user->getUserData()->getNickname(),
 			'user_email' => $user->getEmail()
 		]);
@@ -101,11 +109,11 @@ class Notificator
 	 */
 	public function resetPasswordSuccess(User $user, string $password): void
 	{
-		$mail = new MailData('email_new_password', sprintf('Ваш пароль на сайте %s изменен', $this->site_name), $user->getEmail(), [
+		$mail = new MailData('email_new_password', sprintf('Ваш пароль на сайте %s изменен', $this->siteName), $user->getEmail(), [
 			'nickname' => $user->getUserData()->getNickname(),
 			'user_email' => $user->getEmail(),
 			'user_password' => $password,
-			'site_name' => $this->site_name
+			'site_name' => $this->siteName
 		]);
 		$this->mailer->send($mail);
 	}

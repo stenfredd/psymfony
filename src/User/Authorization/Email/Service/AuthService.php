@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\User\Authorization\Email\Service;
 
+use App\User\Authorization\Email\ValueObject\ActivateEmail;
 use App\User\Authorization\Email\ValueObject\ResetPassword;
+use App\User\Authorization\Email\ValueObject\ResetPasswordConfirm;
 use App\User\Authorization\Email\ValueObject\SignUp;
 use App\User\Authorization\System\Service\TokenService;
 use App\User\Entity\User;
@@ -168,17 +170,18 @@ class AuthService
 	}
 
 	/**
-	 * @param $token
+	 * @param ActivateEmail $tokenVO
 	 * @throws ORMException
 	 * @throws OptimisticLockException
 	 */
-	public function activateUserWithToken($token): void
+	public function activateUserWithToken(ActivateEmail $tokenVO): void
 	{
+		$token = $tokenVO->getToken();
 		$token = $this->activationTokenService->getTokenByValue($token);
 		$this->activationTokenService->checkTokenExpired($token);
 
 		$user = $token->getHolder();
-		$this->passwordResetTokenService->deleteAllUserTokens($user);
+		$this->activationTokenService->deleteAllUserTokens($user);
 
 		$this->activateUser($user);
 	}
@@ -211,14 +214,15 @@ class AuthService
 	}
 
 	/**
-	 * @param $token
+	 * @param ResetPasswordConfirm $resetPasswordVO
 	 * @throws ORMException
 	 * @throws OptimisticLockException
 	 * @throws TransportExceptionInterface
-	 * @throws Exception
 	 */
-	public function resetPasswordByToken(string $token): void
+	public function resetPasswordByToken(ResetPasswordConfirm $resetPasswordVO): void
 	{
+		$token = $resetPasswordVO->getToken();
+
 		$token = $this->passwordResetTokenService->getTokenByValue($token);
 		$this->passwordResetTokenService->checkTokenExpired($token);
 

@@ -4,8 +4,12 @@ namespace App\User\Authorization\Email\Controller;
 
 
 use App\Service\CheckValidation;
+use App\Service\JsonDTO;
 use App\User\Authorization\Email\Service\AuthService as EmailAuthService;
+use App\User\Authorization\Email\Service\RedirectService;
+use App\User\Authorization\Email\ValueObject\ActivateEmail;
 use App\User\Authorization\Email\ValueObject\ResetPassword;
+use App\User\Authorization\Email\ValueObject\ResetPasswordConfirm;
 use App\User\Authorization\Email\ValueObject\SignUp;
 use App\User\Authorization\System\Service\AuthService as SystemAuthService;
 use App\User\Authorization\Email\ValueObject\Login;
@@ -16,9 +20,13 @@ use Swagger\Annotations as SWG;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
+use Symfony\Component\Serializer\Serializer;
 
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
@@ -26,7 +34,7 @@ use App\Exception\ValidationException;
 use Throwable;
 
 /**
- * @Route("/auth")
+ * @Route("/api/auth")
  */
 class EmailAuthController extends AbstractController
 {
@@ -46,16 +54,36 @@ class EmailAuthController extends AbstractController
 	private $checkValidation;
 
 	/**
+	 * @var JsonDTO
+	 */
+	private $jsonDTO;
+
+	/**
+	 * @var RedirectService
+	 */
+	private $redirectService;
+
+	/**
 	 * AuthController constructor.
 	 * @param EmailAuthService $emailAuthService
 	 * @param SystemAuthService $systemAuthService
 	 * @param CheckValidation $checkValidation
+	 * @param JsonDTO $jsonDTO
+	 * @param RedirectService $redirectService
 	 */
-	public function __construct(EmailAuthService $emailAuthService, SystemAuthService $systemAuthService, CheckValidation $checkValidation)
+	public function __construct(
+		EmailAuthService $emailAuthService,
+		SystemAuthService $systemAuthService,
+		CheckValidation $checkValidation,
+		JsonDTO $jsonDTO,
+		RedirectService $redirectService
+	)
 	{
 		$this->emailAuthService = $emailAuthService;
 		$this->systemAuthService = $systemAuthService;
 		$this->checkValidation = $checkValidation;
+		$this->jsonDTO = $jsonDTO;
+		$this->redirectService = $redirectService;
 	}
 
 	/**
@@ -86,13 +114,8 @@ class EmailAuthController extends AbstractController
 	 */
 	public function login(Request $request): Response
 	{
-		$email = $request->request->get('email');
-		$password = $request->request->get('password');
-
-		$loginVO = new Login();
-		$loginVO->setEmail($email);
-		$loginVO->setPassword($password);
-
+		/* @var Login $loginVO */
+		$loginVO = $this->jsonDTO->fromRequest(new Login);
 		$this->checkValidation->validate($loginVO);
 
 		$token = $this->emailAuthService->login($loginVO);
@@ -107,6 +130,7 @@ class EmailAuthController extends AbstractController
 
 	/**
 	 * @Route("/logout", name="logout", methods={"POST"})
+	 * @Security("is_granted('IS_AUTHENTICATED_FULLY')", statusCode=403, message="Access denied")
 	 * @SWG\Tag(name="Auth")
 	 * @SWG\Response(
 	 *     response=200,
@@ -170,15 +194,8 @@ class EmailAuthController extends AbstractController
 	 */
 	public function signUpEmail(Request $request): Response
 	{
-		$email = $request->request->get('email');
-		$password = $request->request->get('password');
-		$nickname = $request->request->get('nickname');
-
-		$signUpVO = new SignUp();
-		$signUpVO->setEmail($email);
-		$signUpVO->setPassword($password);
-		$signUpVO->setNickname($nickname);
-
+		/* @var SignUp $signUpVO */
+		$signUpVO = $this->jsonDTO->fromRequest(new SignUp);
 		$this->checkValidation->validate($signUpVO);
 
 		$user = $this->emailAuthService->signUpEmail($signUpVO);
@@ -195,6 +212,7 @@ class EmailAuthController extends AbstractController
 
 	/**
 	 * @Route("/email/resend-activation-link", name="resend_activation_link", methods={"POST"})
+	 * @Security("is_granted('IS_AUTHENTICATED_FULLY')", statusCode=403, message="Access denied")
 	 * @SWG\Tag(name="Auth")
 	 * @SWG\Response(
 	 *     response=200,
@@ -203,7 +221,6 @@ class EmailAuthController extends AbstractController
 	 *         @SWG\Property(property="message", type="string"),
 	 *     )
 	 * )
-	 * @Security("is_granted('IS_AUTHENTICATED_FULLY')", statusCode=403, message="Access denied")
 	 * @param Request $request
 	 * @return Response
 	 * @throws TransportExceptionInterface
@@ -243,19 +260,26 @@ class EmailAuthController extends AbstractController
 	 * @return Response
 	 * @throws ORMException
 	 * @throws OptimisticLockException
+	 * @throws ValidationException
 	 */
 	public function activateEmail(Request $request): Response
 	{
 		$token = $request->get('token');
 
-		$this->emailAuthService->activateUserWithToken($token);
+		$activateEmailVO = new ActivateEmail();
+		$activateEmailVO->setToken($token);
 
-		return $this->json([
-			'status' => 'success',
-			'data' => [
-				'message' => 'User activated successfully'
-			]
-		]);
+		$this->checkValidation->validate($activateEmailVO);
+
+		try {
+			$this->emailAuthService->activateUserWithToken($activateEmailVO);
+		} catch (\InvalidArgumentException $e) {
+			return $this->redirect($this->redirectService->getActivationLinkFailRedirectTo());
+		} catch (NotFoundHttpException $e) {
+			return $this->redirect($this->redirectService->getActivationLinkFailRedirectTo());
+		}
+
+		return $this->redirect($this->redirectService->getActivationLinkSuccessRedirectTo());
 	}
 
 	/**
@@ -281,11 +305,8 @@ class EmailAuthController extends AbstractController
 	 */
 	public function resetPassword(Request $request): Response
 	{
-		$email = $request->request->get('email');
-
-		$resetPasswordVO = new ResetPassword();
-		$resetPasswordVO->setEmail($email);
-
+		/* @var ResetPassword $resetPasswordVO */
+		$resetPasswordVO = $this->jsonDTO->fromRequest(new ResetPassword);
 		$this->checkValidation->validate($resetPasswordVO);
 
 		$this->emailAuthService->sendNewResetPasswordLink($resetPasswordVO);
@@ -299,7 +320,7 @@ class EmailAuthController extends AbstractController
 	}
 
 	/**
-	 * @Route("/email/reset-password-comfirm", name="reset_password_confirm", methods={"GET"})
+	 * @Route("/email/reset-password-confirm", name="reset_password_confirm", methods={"GET"})
 	 * @SWG\Tag(name="Auth")
 	 * @SWG\Parameter(
 	 *     name="token",
@@ -316,22 +337,25 @@ class EmailAuthController extends AbstractController
 	 * )
 	 * @param Request $request
 	 * @return Response
-	 * @throws ORMException
-	 * @throws OptimisticLockException
 	 * @throws TransportExceptionInterface
+	 * @throws ValidationException
 	 */
 	public function resetPasswordConfirm(Request $request): Response
 	{
 		$token = $request->get('token');
 
-		$this->emailAuthService->resetPasswordByToken($token);
+		$resetPasswordVO = new ResetPasswordConfirm();
+		$resetPasswordVO->setToken($token);
 
-		return $this->json([
-			'status' => 'success',
-			'data' => [
-				'message' => 'New password has been sent to email'
-			]
-		]);
+		$this->checkValidation->validate($resetPasswordVO);
+
+		try {
+			$this->emailAuthService->resetPasswordByToken($resetPasswordVO);
+		} catch (\Exception $e) {
+			return $this->redirect($this->redirectService->getResetPasswordFailRedirectTo());
+		}
+
+		return $this->redirect($this->redirectService->getResetPasswordSuccessRedirectTo());
 	}
 
 

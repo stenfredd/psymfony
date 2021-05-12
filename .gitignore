@@ -2,6 +2,7 @@
 /.idea/
 /debug_reports/
 /uploads/
+/assets/config.js
 
 ###> symfony/framework-bundle ###
 /.env.local
@@ -25,6 +26,7 @@ yarn-error.log
 .phpunit.result.cache
 /phpunit.xml
 ###< symfony/phpunit-bridge ###
+
 ###> phpunit/phpunit ###
 /phpunit.xml
 .phpunit.result.cache

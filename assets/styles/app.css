@@ -1,3 +1,40 @@
-body {
-    background-color: lightgray;
+/* VALIDATION */
+input {
+    border: 1px solid silver;
+    border-radius: 4px;
+    background: white;
+    padding: 5px 10px;
+}
+
+.dirty {
+    border-color: #5A5;
+    background: #EFE;
+}
+
+.dirty:focus {
+    outline-color: #8E8;
+}
+
+.error {
+    width: 100%;
+    margin-top: .25rem;
+    font-size: .875em;
+    color: #dc3545;
+}
+
+.error:focus {
+    outline-color: #F99;
+}
+
+.top_error {
+    width: 100%;
+    margin-top: .25rem;
+    margin-bottom: .25rem;
+    font-size: 16px;
+    color: #dc3545;
+    text-align: center;
+}
+/* VALIDATION */
+.form-group{
+    margin-bottom: 15px;
 }

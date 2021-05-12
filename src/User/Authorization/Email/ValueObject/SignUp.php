@@ -2,9 +2,10 @@
 
 namespace App\User\Authorization\Email\ValueObject;
 
+use App\Interfaces\RequestValueObjectInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 
-class SignUp
+class SignUp implements RequestValueObjectInterface
 {
 	/**
 	 * @Assert\Email

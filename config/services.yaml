@@ -31,6 +31,8 @@ services:
     # please note that last definitions always *replace* previous ones
     App\User\Authorization\Email\Service\Notificator:
         arguments: ['%env(SITE_NAME)%']
+    App\User\Authorization\Email\Service\RedirectService:
+        arguments: ['%env(ACTIVATION_LINK_SUCCESS_REDIRECT_TO)%', '%env(ACTIVATION_LINK_FAIL_REDIRECT_TO)%', '%env(RESET_PASSWORD_LINK_SUCCESS_REDIRECT_TO)%', '%env(RESET_PASSWORD_LINK_FAIL_REDIRECT_TO)%']
     App\User\Authorization\System\Security\PasswordEncoder:
         arguments: ['%env(STATIC_SALT)%']
     App\User\Authorization\System\Service\AuthService:

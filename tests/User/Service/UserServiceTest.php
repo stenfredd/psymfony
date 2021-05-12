@@ -3,6 +3,8 @@
 namespace App\Tests\User\Service;
 
 
+use App\User\Authorization\Email\ValueObject\ActivateEmail;
+use App\User\Authorization\Email\ValueObject\ResetPasswordConfirm;
 use App\User\Authorization\Email\ValueObject\SignUp;
 use App\User\Entity\User;
 
@@ -182,7 +184,10 @@ class UserServiceTest extends KernelTestCase
 
 		$activationToken = $this->emailActivationTokenService->createEmailActivationToken($user);
 
-		$this->emailAuthService->activateUserWithToken($activationToken->getToken());
+		$activateEmailVO = new ActivateEmail();
+		$activateEmailVO->setToken($activationToken->getToken());
+
+		$this->emailAuthService->activateUserWithToken($activateEmailVO);
 
 		$this->assertTrue($user->isActive());
 	}
@@ -195,7 +200,10 @@ class UserServiceTest extends KernelTestCase
 
 		$resetToken = $this->emailPasswordResetTokenService->createEmailPasswordResetToken($user);
 
-		$this->emailAuthService->resetPasswordByToken($resetToken->getToken());
+		$resetPasswordVO = new ResetPasswordConfirm();
+		$resetPasswordVO->setToken($resetToken->getToken());
+
+		$this->emailAuthService->resetPasswordByToken($resetPasswordVO);
 
 		$newPassword = $user->getPassword();
 

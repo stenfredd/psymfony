@@ -23,7 +23,7 @@ class FrontController extends AbstractController
 	}
 
     /**
-     * @Route("/{vueRouting}", priority=-1, name="front", defaults={"vueRouting": ""})
+     * @Route("/{vueRouting}", priority=-1, name="front", defaults={"vueRouting": ""}, requirements={"vueRouting"=".+"})
      */
     public function index(): Response
     {

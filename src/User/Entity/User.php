@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\User\Entity;
 
-
 use App\User\Authorization\System\Entity\AuthToken;
 use App\User\Authorization\System\Entity\LoginFailed;
 use App\User\Repository\UserRepository;
@@ -77,7 +76,7 @@ class User implements UserInterface
 
     /**
      * @ORM\OneToOne(targetEntity=UserData::class, mappedBy="holder", cascade={"persist", "remove"}, orphanRemoval=true)
-	 * @ORM\JoinColumn(nullable=true)
+	 * @ORM\JoinColumn(nullable=true, onDelete="CASCADE")
      */
     private $userData;
 

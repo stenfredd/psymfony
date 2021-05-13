@@ -34,6 +34,9 @@ RUN useradd -G www-data,root -s /bin/bash --uid 1000 --gid 1000 appuser
 RUN wget https://get.symfony.com/cli/installer -O - | bash
 RUN mv /root/.symfony/bin/symfony /usr/local/bin/symfony
 
+# Install Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
 # Set working directory
 WORKDIR /var/www
 

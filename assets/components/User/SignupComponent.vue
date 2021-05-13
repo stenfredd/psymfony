@@ -24,9 +24,10 @@
                                     <label class="form__label">Имя</label>
                                     <input class="form-control" v-model.trim="$v.nickname.$model"/>
 
-                                    <div v-if="$v.email.$dirty">
+                                    <div v-if="$v.nickname.$dirty">
                                         <div class="error" v-if="!$v.nickname.required">Укажите ваше имя</div>
                                         <div class="error" v-if="!$v.nickname.minLength || !$v.nickname.maxLength">Имя должно быть от {{$v.nickname.$params.minLength.min}} до {{$v.nickname.$params.maxLength.max}}</div>
+                                        <div class="error" v-if="!$v.nickname.nickname">Имя может содержать только английские и русские буквы</div>
                                     </div>
                                 </div>
 
@@ -37,6 +38,7 @@
                                     <div v-if="$v.password.$dirty">
                                         <div class="error" v-if="!$v.password.required">Укажите ваш пароль</div>
                                         <div class="error" v-if="!$v.password.minLength || !$v.password.maxLength">Пароль должен быть от {{$v.password.$params.minLength.min}} до {{$v.password.$params.maxLength.max}}</div>
+                                        <div class="error" v-if="!$v.password.pass">Пароль может содержать только английские буквы, а также символы !@#$%^&*()-_=+</div>
                                     </div>
                                 </div>
 
@@ -72,8 +74,10 @@
     import { required, minLength, between } from 'vuelidate/lib/validators'
     import email from "vuelidate/lib/validators/email";
     import maxLength from "vuelidate/lib/validators/maxLength";
+    import { helpers } from 'vuelidate/lib/validators'
 
-
+    const nickname = helpers.regex("nickname", /^[a-zA-Zа-яА-Я]+$/);
+    const pass = helpers.regex("pass", /^[a-zA-Z0-9\!\@\#\$\%\^\&\*\(\)\-\_\=\+]+$/);
 
     export default {
         mounted() {
@@ -97,12 +101,14 @@
             password: {
                 required,
                 minLength: minLength(6),
-                maxLength: maxLength(128)
+                maxLength: maxLength(128),
+                pass
             },
             nickname:{
                 required,
-                minLength: minLength(5),
-                maxLength: maxLength(32)
+                minLength: minLength(2),
+                maxLength: maxLength(32),
+                nickname
             },
             accept:{
                 required

@@ -24,7 +24,7 @@ class SignUp implements RequestValueObjectInterface
 	private $password;
 
 	/**
-	 * @Assert\Regex("/^[a-zA-Z0-9\-\_]+$/")
+	 * @Assert\Regex("/^[a-zA-Zа-яА-Я\-\_]+$/")
 	 * @Assert\NotNull
 	 */
 	private $nickname;

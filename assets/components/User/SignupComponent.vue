@@ -16,7 +16,7 @@
 
                                     <div v-if="$v.email.$dirty">
                                         <div class="error" v-if="!$v.email.required">Укажите ваш email</div>
-                                        <div class="error" v-if="!$v.email.email">Укажите корректный email</div>
+                                        <div class="error" v-if="!$v.email.customemail">Укажите корректный email</div>
                                     </div>
                                 </div>
 
@@ -78,6 +78,8 @@
 
     const nickname = helpers.regex("nickname", /^[a-zA-Zа-яА-Я]+$/);
     const pass = helpers.regex("pass", /^[a-zA-Z0-9\!\@\#\$\%\^\&\*\(\)\-\_\=\+]+$/);
+    const customemail = helpers.regex("customemail", /^[a-zA-Z0-9\-\_]+@[a-zA-Z0-9]+\.[a-zA-Z0-9]+$/);
+
 
     export default {
         mounted() {
@@ -96,7 +98,7 @@
         validations: {
             email: {
                 required,
-                email
+                customemail
             },
             password: {
                 required,

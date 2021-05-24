@@ -12,7 +12,7 @@ export default class Api {
 
         let user = new User;
         if (user.hasAuthToken()) {
-            let config = {
+            config = {
                 headers: {
                     'X-AUTH-TOKEN': user.getAuthToken()
                 }
@@ -20,6 +20,25 @@ export default class Api {
         }
 
         axios.post(this.baseUrl + url, postData, config)
+            .then(
+                response => (successCallback(response.data)),
+                error => (errorCallback(error.response.data))
+            );
+    }
+
+    get(url, successCallback=null, errorCallback=null) {
+        let config = null;
+
+        let user = new User;
+        if (user.hasAuthToken()) {
+            config = {
+                headers: {
+                    'X-AUTH-TOKEN': user.getAuthToken()
+                }
+            };
+        }
+
+        axios.get(this.baseUrl + url, config)
             .then(
                 response => (successCallback(response.data)),
                 error => (errorCallback(error.response.data))

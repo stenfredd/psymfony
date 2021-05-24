@@ -200,4 +200,53 @@ class UserService
 		return $this->permissionRepository->userHasPermission($user, $permissionName);
 	}
 
+	/**
+	 * @param User $user
+	 * @return array
+	 */
+	public function getPermissions(User $user): array
+	{
+		$result = [];
+
+		$roles = $user->getRolesCollection();
+		if (count($roles) > 0) {
+			foreach ($roles as $cRole) {
+				$rolePermissions = $cRole->getPermissions();
+
+				if (count($rolePermissions) > 0) {
+					foreach ($rolePermissions as $cPermission) {
+						$result[] = $cPermission;
+					}
+				}
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param User $user
+	 * @return array
+	 */
+	public function getUserData(User $user): array
+	{
+		$permissions = $this->getPermissions($user);
+
+		$permissions_strings = [];
+		if ($permissions > 0) {
+			foreach ($permissions as $cPermission) {
+				$permissions_strings[] = $cPermission->getName();
+			}
+		}
+
+		return [
+			'id' => $user->getId(),
+			'active' => $user->getActive(),
+			'email' => $user->getEmail(),
+			'nickname' => $user->getUserData()->getNickname(),
+			'permissions' => $permissions_strings,
+			'created_at' => $user->getCreatedAt()->format('d.m.Y H:i')
+		];
+	}
+
 }

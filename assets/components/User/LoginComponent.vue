@@ -31,7 +31,7 @@
                                 </div>
 
                                 <div class="form-group">
-                                    <button class="btn btn-primary" type="submit">Войти</button>
+                                    <button class="btn btn-primary" type="submit" :disabled="sendProcess">Войти</button>
                                 </div>
 
                                 <router-link to="/sign-up">Зарегистрироваться</router-link><br>
@@ -49,10 +49,12 @@
     import './styles/auth.css'
     import Api from '../../components/system/api.js';
 
-    import { required, minLength, between } from 'vuelidate/lib/validators'
+    import {required, minLength, between, helpers} from 'vuelidate/lib/validators'
     import email from "vuelidate/lib/validators/email";
     import maxLength from "vuelidate/lib/validators/maxLength";
     import User from "./user.js"
+
+    const customemail = helpers.regex("customemail", /^[a-zA-Z0-9\-\_]+@[a-zA-Z0-9]+\.[a-zA-Z0-9]+$/);
 
     export default {
         mounted() {
@@ -62,13 +64,14 @@
             return {
                 email: '',
                 password: '',
+                sendProcess: false,
                 invalidLogin: false
             }
         },
         validations: {
             email: {
                 required,
-                email
+                customemail
             },
             password: {
                 required,
@@ -86,15 +89,31 @@
                     return;
                 }
 
+                this.sendProcess = true;
                 let api = new Api;
                 api.post('/auth/email/login', {email: this.email, password: this.password}, function (data) {
                     console.log(data);
+                    this.sendProcess = false;
 
                     let user = new User;
                     user.setAuthToken(data.data.token);
 
-                    this.$router.push('/user/cabinet');
+                    api.get('/user/personal-data', function (data) {
+                        user.setUserData(data.data);
+
+                        if (user.hasPermission('ADMIN_PANEL')) {
+                            this.$router.push('/admin/desktop');
+                        }
+                        if (user.hasPermission('PERSONAL_CABINET')) {
+                            this.$router.push('/user/cabinet');
+                        }
+
+                    }.bind(this), function (data) {
+                        alert('Непредвиденная ошибка 198_1');
+                    }.bind(this));
+
                 }.bind(this), function (data) {
+                    this.sendProcess = false;
                     if (data.error.message === 'Invalid username or password') {
                         this.invalidLogin = true;
                     }

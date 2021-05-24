@@ -4,6 +4,9 @@ controllers:
 api_auth:
     resource: ../../src/User/Authorization/Email/Controller/
     type: annotation
+api_user_personal:
+    resource: ../../src/User/Personal/Controller/
+    type: annotation
 kernel:
     resource: ../../src/Kernel.php
     type: annotation

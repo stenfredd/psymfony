@@ -16,12 +16,14 @@ import AccountActivationFailedComponent from "./components/User/AccountActivatio
 import ResetPasswordComponent from "./components/User/ResetPasswordComponent";
 import PasswordChangedComponent from "./components/User/PasswordChangedComponent";
 import PasswordChangeFailedComponent from "./components/User/PasswordChangeFailedComponent";
+import ActivationAccountComponent from "./components/User/ActivationAccountComponent";
 
 const routes = [
     { path: '/', component: MainpageComponent },
-    { path: '/login', component: LoginComponent},
-    { path: '/sign-up', component: SignupComponent},
-    { path: '/user/cabinet', component: PersonalCabinetComponent, meta: { auth: true }},
+    { path: '/login', component: LoginComponent, meta: { guest: true }},
+    { path: '/activate', component: ActivationAccountComponent, meta: { auth: true }},
+    { path: '/sign-up', component: SignupComponent, meta: { guest: true }},
+    { path: '/user/cabinet', component: PersonalCabinetComponent, meta: { auth: true, active: true }},
     { path: '/account-activated', component: AccountActivatedComponent},
     { path: '/account-activation-filed', component: AccountActivationFailedComponent},
     { path: '/reset-password', component: ResetPasswordComponent},
@@ -39,10 +41,28 @@ export default router;
 router.beforeEach((to, from, next) => {
     console.log(to);
 
+    if (to['meta']['guest']) {
+        let user = new User();
+        if (user.hasAuthToken()) {
+            if (user.hasPermission('ADMIN_PANEL')) {
+                next('/admin/desktop');
+            }
+            if (user.hasPermission('PERSONAL_CABINET')) {
+                next('/user/cabinet');
+            }
+        }
+    }
+
     if (to['meta']['auth']) {
-        let user = new User;
+        let user = new User();
         if (!user.hasAuthToken()) {
             return next('/login');
+        }
+
+        if (to['meta']['active']) {
+            if (!user.isActive()) {
+                return next('/activate');
+            }
         }
     }
 

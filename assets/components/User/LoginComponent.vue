@@ -16,7 +16,7 @@
 
                                     <div v-if="$v.email.$dirty">
                                         <div class="error" v-if="!$v.email.required">Укажите ваш email</div>
-                                        <div class="error" v-if="!$v.email.email">Укажите корректный email</div>
+                                        <div class="error" v-if="!$v.email.customemail">Укажите корректный email</div>
                                     </div>
                                 </div>
 
@@ -49,10 +49,11 @@
     import './styles/auth.css'
     import Api from '../../components/system/api.js';
 
-    import {required, minLength, between, helpers} from 'vuelidate/lib/validators'
+    import {required, minLength, between} from 'vuelidate/lib/validators'
     import email from "vuelidate/lib/validators/email";
     import maxLength from "vuelidate/lib/validators/maxLength";
     import User from "./user.js"
+    import { helpers } from 'vuelidate/lib/validators'
 
     const customemail = helpers.regex("customemail", /^[a-zA-Z0-9\-\_]+@[a-zA-Z0-9]+\.[a-zA-Z0-9]+$/);
 

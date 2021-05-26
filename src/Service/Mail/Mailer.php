@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Service\Mail;
 
-
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;

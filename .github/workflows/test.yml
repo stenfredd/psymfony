@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: test first
+      uses: stenfredd/ssh-action@master
       with:
         host: 94.228.118.222
         username: root

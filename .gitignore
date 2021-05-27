@@ -2,7 +2,6 @@
 /.idea/
 /debug_reports/
 /uploads/
-/assets/config.js
 
 ###> symfony/framework-bundle ###
 /.env.local

@@ -1,0 +1,18 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: ls -a via ssh
+      uses: stenfredd/psymfony@master
+      with:
+        command: ls -a
+        host: 94.228.118.222
+        username: root
+        privateKey: ${{ secrets.SSH_KEY}}

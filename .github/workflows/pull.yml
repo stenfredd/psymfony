@@ -10,11 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-        # Setup key
+      # Setup key
       - run: set -eu
       - run: mkdir "$HOME/.ssh"
       - run: echo "${{ secrets.SSH_KEY }}" > "$HOME/.ssh/key"
       - run: chmod 600 "$HOME/.ssh/key"
       - run: cat $HOME/.ssh/key
-        # Deploy
+      # Deploy
       - run: ssh -i $HOME/.ssh/key root@94.228.118.222 'cd /var/www && git pull origin'

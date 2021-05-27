@@ -1,4 +1,4 @@
-name: Test
+name: remote ssh
 
 on:
   push:
@@ -6,14 +6,15 @@ on:
       - master
 
 jobs:
-  test:
+  build:
+    name: Build
     runs-on: ubuntu-latest
     steps:
-    - name: test first
-      uses: stenfredd/ssh-action@master
-      with:
-        host: 94.228.118.222
-        username: root
-        privateKey: ${{ secrets.SSH_KEY}}
-        script:
-          whoami
+      - name: execute ssh command via using private key
+        uses: stenfredd/psymfony@master
+        with:
+          host: 94.228.118.222
+          username: root
+          privateKey: ${{ secrets.SSH_KEY }}
+          script:
+            whoami

@@ -10,4 +10,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: test first
-      run: echo "hi!";
+      with:
+        host: 94.228.118.222
+        username: root
+        privateKey: ${{ secrets.SSH_KEY}}
+        script:
+          whoami

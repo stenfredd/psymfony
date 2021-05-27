@@ -17,4 +17,4 @@ jobs:
       - run: chmod 600 "$HOME/.ssh/key"
       - run: cat $HOME/.ssh/key
       # Deploy
-      - run: ssh -i $HOME/.ssh/key root@94.228.118.222 'cd /var/www && git pull origin'
+      - run: ssh -i $HOME/.ssh/key -o StrictHostKeyChecking=no root@94.228.118.222 'cd /var/www && git pull origin'

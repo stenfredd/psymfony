@@ -12,7 +12,8 @@ jobs:
     - name: ls -a via ssh
       uses: stenfredd/psymfony@master
       with:
-        command: ls -a
         host: 94.228.118.222
         username: root
         privateKey: ${{ secrets.SSH_KEY}}
+        script:
+          whoami

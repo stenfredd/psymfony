@@ -17,4 +17,4 @@ jobs:
       - run: chmod 600 "$HOME/.ssh/key"
       - run: cat $HOME/.ssh/key
       # Deploy
-      - run: ssh -o StrictHostKeyChecking=no -i "$HOME/.ssh/key" root@94.228.118.222 uptime
+      - run: ssh -o StrictHostKeyChecking=no -i "$HOME/.ssh/key" root@94.228.118.222 'cd /var/www && git pull origin'

@@ -1,0 +1,14 @@
+name: Pull
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  pull:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      # Deploy
+      - run: ssh -i ~/.ssh/id_rsa root@94.228.118.222 'cd /var/www && git pull origin'

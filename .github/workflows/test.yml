@@ -9,11 +9,5 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - name: ls -a via ssh
-      uses: stenfredd/psymfony@master
-      with:
-        host: 94.228.118.222
-        username: root
-        privateKey: ${{ secrets.SSH_KEY}}
-        script:
-          whoami
+    - name: test first
+      run: echo "hi!";
